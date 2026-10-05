@@ -1222,6 +1222,11 @@ class StudyPlannerApp {
       if (!saved) return { ...defaultSettings };
       const parsed = JSON.parse(saved);
       const merged = { ...defaultSettings, ...parsed };
+      // Migration: update old default name 'ريان' or missing name to 'سليم' and age 9
+      if (!merged.childName || merged.childName === 'ريان') {
+        merged.childName = 'سليم';
+        merged.childAge = 9;
+      }
       merged.gameConfig = { ...defaultSettings.gameConfig, ...(parsed.gameConfig || {}) };
       return merged;
     } catch (e) {
@@ -1429,7 +1434,7 @@ class StudyPlannerApp {
 
     // Child Profile Name & Avatar
     const headerChildName = document.getElementById('header-child-name');
-    if (headerChildName) headerChildName.textContent = this.settings.childName || 'ريان';
+    if (headerChildName) headerChildName.textContent = this.settings.childName || 'سليم';
 
     const avatarSrc = this.settings.avatarDataUrl || this.settings.avatarPreset || 'assets/avatar_son.jpg';
     const headerAvatar = document.getElementById('header-child-avatar');

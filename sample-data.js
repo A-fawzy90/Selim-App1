@@ -1,8 +1,8 @@
 // Realistic sample data for the child planner in Arabic
 export const defaultSettings = {
   appName: "أسبوعي",
-  childName: "ريان",
-  childAge: 8,
+  childName: "سليم",
+  childAge: 9,
   avatarType: "preset", // "preset" | "uploaded"
   avatarPreset: "assets/avatar_son.jpg",
   avatarDataUrl: null,
