@@ -1,0 +1,12 @@
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node & Logs
+node_modules/
+*.log
+
+# Scratch tests
+test_ids.cjs
+test_sim.js

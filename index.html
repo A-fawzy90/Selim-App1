@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>أسبوعي - جدول المذاكرة والأنشطة للأبطال</title>
+  <meta name="description" content="تطبيق جدول أسبوعي ودراسي لطيف وبسيط للأطفال وأولياء الأمور لتنظيم المذاكرة، الراحة، والنوادي باللغة العربية.">
+  
+  <!-- Apple iOS Mobile Web App Capabilities (iPhone 11 to iPhone 18) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="أسبوعي">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#6366F1">
+  <link rel="apple-touch-icon" href="assets/avatar_son.jpg">
+  
+  <!-- Google Fonts: Tajawal for friendly modern Arabic typography & Fredoka for bubbly accents -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css?v=2.0">
+  <link rel="icon" type="image/jpeg" href="assets/logo_mascot.jpg">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body class="theme-light">
+  <!-- Toast / Gentle Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Confetti Canvas for Joyful Celebrations -->
+  <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
+
+  <div class="app-layout">
+    <!-- Top Header Bar -->
+    <header class="app-header">
+      <div class="header-container">
+        <!-- Logo & App Name -->
+        <div class="brand-section">
+          <div class="app-logo-wrapper" id="brand-logo-btn" title="تخصيص الشعار والاسم">
+            <img id="app-logo-img" src="assets/logo_mascot.jpg" alt="شعار أسبوعي" class="app-logo">
+            <span class="logo-sparkle">✨</span>
+          </div>
+          <div class="brand-titles">
+            <h1 class="app-title" id="display-app-name">أسبوعي</h1>
+            <p class="app-subtitle" id="display-app-tagline">جدول المذاكرة والمرح</p>
+          </div>
+        </div>
+
+        <!-- Center Stars / Motivation Jar -->
+        <div class="header-center-pill" id="header-stars-pill" title="لوحة النجوم والمكافآت">
+          <span class="star-icon bounce-hover">⭐</span>
+          <span class="stars-count" id="header-stars-count">12</span>
+          <span class="stars-label">نجمة ذكية</span>
+        </div>
+
+        <!-- Right Action Controls -->
+        <div class="header-controls">
+          <!-- Theme Toggle -->
+          <button id="theme-toggle-btn" class="icon-btn" aria-label="تبديل المظهر" title="المظهر النهاري/الليلي">
+            <span id="theme-icon">🌙</span>
+          </button>
+
+          <!-- Dual Account Switcher Component (حساب الطفل / حساب ولي الأمر) -->
+          <div class="account-switcher-container" id="account-switcher-container">
+            <button id="account-switch-btn" class="account-pill-btn" title="التبديل بين حساب ولي الأمر وحساب الطفل">
+              <span class="acc-pill-icon" id="acc-pill-icon">👦</span>
+              <span class="acc-pill-role" id="acc-pill-role">حساب الطفل</span>
+              <span class="acc-pill-action" id="acc-pill-action">🔒 دخول وليّ الأمر</span>
+            </button>
+          </div>
+
+          <!-- Child Avatar & Greeting Chip -->
+          <div class="child-avatar-chip" id="child-profile-trigger" title="ملف الطفل والشعار">
+            <img id="header-child-avatar" src="assets/avatar_son.jpg" alt="صورة البطل" class="child-avatar-img">
+            <div class="child-meta">
+              <span class="child-name" id="header-child-name">ريان</span>
+              <span class="child-badge">بطل اليوم 🚀</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Navigation Bar -->
+    <nav class="main-navigation" aria-label="شريط التنقل الرئيسي">
+      <div class="nav-container">
+        <button class="nav-tab active" data-tab="today" id="tab-today">
+          <span class="tab-icon">☀️</span>
+          <span class="tab-label">شاشة اليوم</span>
+        </button>
+        <button class="nav-tab" data-tab="weekly" id="tab-weekly">
+          <span class="tab-icon">🗓️</span>
+          <span class="tab-label">الجدول الأسبوعي</span>
+        </button>
+        <button class="nav-tab" data-tab="timer" id="tab-timer">
+          <span class="tab-icon">⏱️</span>
+          <span class="tab-label">مؤقت التركيز</span>
+          <span class="timer-badge-pulse" id="timer-active-indicator" style="display: none;"></span>
+        </button>
+        <button class="nav-tab" data-tab="rewards" id="tab-rewards">
+          <span class="tab-icon">🏆</span>
+          <span class="tab-label">النجوم والملصقات</span>
+        </button>
+        <button class="nav-tab" data-tab="game" id="tab-game">
+          <span class="tab-icon">🎮</span>
+          <span class="tab-label">وقت اللعب</span>
+          <span class="game-nav-badge" id="game-nav-status">🔒</span>
+        </button>
+        <button class="nav-tab" data-tab="parent" id="tab-parent">
+          <span class="tab-icon">⚙️</span>
+          <span class="tab-label">إعدادات ولي الأمر</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content Body -->
+    <main class="main-content-area" id="main-content">
+      
+      <!-- ============================================== -->
+      <!-- TAB 1: TODAY'S SCREEN (شاشة اليوم) -->
+      <!-- ============================================== -->
+      <section id="view-today" class="view-panel active">
+        <!-- Friendly Greeting Hero Banner -->
+        <div class="today-hero-card">
+          <div class="hero-text-side">
+            <div class="hero-date-badge">
+              <span class="calendar-icon">📅</span>
+              <span id="today-arabic-date">الإثنين، 5 أكتوبر</span>
+            </div>
+            <h2 class="hero-greeting" id="today-greeting-text">صباح النشاط يا ريان! 🌟</h2>
+            <p class="hero-encouragement" id="today-encouragement">
+              يوم جديد مليء بالتعلم واللعب، خطوة بخطوة تنجز كل ما تحب!
+            </p>
+          </div>
+          <div class="hero-illustration-side">
+            <div class="hero-avatar-frame">
+              <img id="hero-avatar-img" src="assets/avatar_son.jpg" alt="صورة البطل">
+              <div class="hero-floating-bubble">أنت رائع! 🌸</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Today's Encouraging Progress Bar -->
+        <div class="progress-card">
+          <div class="progress-info-row">
+            <div class="progress-title-wrap">
+              <span class="progress-badge-icon">🎯</span>
+              <span class="progress-headline" id="progress-summary-text">إنجاز اليوم اللطيف</span>
+            </div>
+            <span class="progress-stats-pill" id="today-progress-stats">2 من 6 أنشطة</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="today-progress-fill" style="width: 33%;"></div>
+          </div>
+          <p class="progress-gentle-caption" id="today-progress-caption">
+            عمل رائع جداً! استمر بابتسامتك، كل خطوة ترفع من مهاراتك 🎈
+          </p>
+        </div>
+
+        <!-- Highlight: Next Up / Current Activity -->
+        <div class="upcoming-focus-banner" id="upcoming-focus-banner">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Daily Agenda Timeline Header & Controls -->
+        <div class="section-action-header">
+          <div class="section-title-wrap">
+            <h3 class="section-title">جدول أنشطة اليوم</h3>
+            <span class="section-subtitle" id="today-day-label">الأحد</span>
+          </div>
+          <div class="section-actions-group">
+            <button class="btn btn-secondary-child" id="today-filter-toggle">
+              <span>🔍 تصفية الأنشطة</span>
+            </button>
+            <button class="btn btn-primary-child" id="btn-add-today-activity">
+              <span>➕ إضافة نشاط</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Category Quick Filter Chips -->
+        <div class="filter-chips-scroll" id="today-filter-chips">
+          <button class="chip active" data-filter="all">الكل 🌟</button>
+          <button class="chip" data-filter="prayer">الصلوات الخمس 🕌</button>
+          <button class="chip" data-filter="quran">حفظ القرآن 📖</button>
+          <button class="chip" data-filter="study">مذاكرة 📚</button>
+          <button class="chip" data-filter="homework">واجبات ✏️</button>
+          <button class="chip" data-filter="club">النوادي ⚽</button>
+          <button class="chip" data-filter="rest">استراحة 🌸</button>
+          <button class="chip" data-filter="freetime">وقت حر 🎨</button>
+        </div>
+
+        <!-- Timeline Cards Container -->
+        <div class="timeline-container" id="today-timeline-list">
+          <!-- Dynamic schedule cards -->
+        </div>
+
+        <!-- Gentle Empty State (Hidden when items exist) -->
+        <div class="empty-state-card" id="today-empty-state" style="display: none;">
+          <div class="empty-icon">🎈</div>
+          <h4>لا توجد أنشطة مجدولة اليوم</h4>
+          <p>يوم هادئ ومريح! بإمكان ولي الأمر إضافة واجبات أو جلسات مذاكرة أو فترات راحة بضغطة واحدة.</p>
+          <button class="btn btn-primary-child" id="empty-add-btn">
+            <span>➕ إضافة أول نشاط لهذا اليوم</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: WEEKLY SCHEDULE (الجدول الأسبوعي) -->
+      <!-- ============================================== -->
+      <section id="view-weekly" class="view-panel">
+        <div class="weekly-header-bar">
+          <div class="weekly-title-wrap">
+            <h2 class="section-title">الجدول الأسبوعي الشامل</h2>
+            <p class="section-subtitle">تنظيم أسبوع كامل من الدراسة، النوادي، وأوقات الراحة الممتعة</p>
+          </div>
+          <div class="weekly-controls">
+            <button class="btn btn-primary-child" id="btn-add-weekly-item">
+              <span>➕ إضافة موعد جديد</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Day Selector Tabs (Sunday to Saturday) -->
+        <div class="weekly-days-nav" id="weekly-days-nav">
+          <!-- Dynamically generated day buttons -->
+        </div>
+
+        <!-- Weekly Summary Metrics Bar -->
+        <div class="weekly-metrics-grid">
+          <div class="metric-card metric-study">
+            <div class="metric-icon">📚</div>
+            <div class="metric-info">
+              <span class="metric-num" id="metric-study-count">0</span>
+              <span class="metric-label">جلسات مذاكرة</span>
+            </div>
+          </div>
+          <div class="metric-card metric-clubs">
+            <div class="metric-icon">⚽</div>
+            <div class="metric-info">
+              <span class="metric-num" id="metric-club-count">0</span>
+              <span class="metric-label">حصص النوادي</span>
+            </div>
+          </div>
+          <div class="metric-card metric-rest">
+            <div class="metric-icon">🌸</div>
+            <div class="metric-info">
+              <span class="metric-num" id="metric-rest-count">0</span>
+              <span class="metric-label">أوقات استراحة</span>
+            </div>
+          </div>
+          <div class="metric-card metric-complete">
+            <div class="metric-icon">✅</div>
+            <div class="metric-info">
+              <span class="metric-num" id="metric-completed-count">0</span>
+              <span class="metric-label">مهام أُنجزت بنجاح</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Selected Day View in Weekly -->
+        <div class="weekly-selected-day-container">
+          <div class="selected-day-title-row">
+            <h3 class="day-view-heading" id="weekly-active-day-heading">أنشطة يوم الأحد</h3>
+            <span class="day-badge-type" id="weekly-active-day-type">يوم مدرسي</span>
+          </div>
+          
+          <div class="weekly-items-grid" id="weekly-day-items-grid">
+            <!-- Schedule items rendered here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: STUDY SESSIONS & FOCUS TIMER (مؤقت التركيز) -->
+      <!-- ============================================== -->
+      <section id="view-timer" class="view-panel">
+        <div class="timer-page-layout">
+          <!-- Left/Top: Setup Session -->
+          <div class="timer-config-card">
+            <div class="card-header-child">
+              <span class="card-icon">🎯</span>
+              <div>
+                <h3>جلسة مذاكرة هادئة</h3>
+                <p>اختر المادة والمدة لنبدأ معاً بتركيز ومرح</p>
+              </div>
+            </div>
+
+            <!-- Subject Selection -->
+            <div class="form-group-child">
+              <label for="timer-subject-select">المادة الدراسية:</label>
+              <select id="timer-subject-select" class="child-select">
+                <option value="math">الرياضيات 🔢</option>
+                <option value="arabic">اللغة العربية 📖</option>
+                <option value="science">العلوم والطبيعة 🔬</option>
+                <option value="english">اللغة الإنجليزية 🔤</option>
+                <option value="islamic">القرآن والتربية الإسلامية 🕌</option>
+                <option value="art">الرسم والأنشطة 🎨</option>
+                <option value="general">مذاكرة عامة وقراءة 📚</option>
+              </select>
+            </div>
+
+            <!-- Task Description / Homework Title -->
+            <div class="form-group-child">
+              <label for="timer-task-input">ماذا سننجز في هذه الجلسة؟</label>
+              <input type="text" id="timer-task-input" class="child-input" placeholder="مثال: حل صفحة 15 من كتاب التمارين" value="حل تمارين كتاب الرياضيات">
+            </div>
+
+            <!-- Preset Duration Buttons -->
+            <div class="form-group-child">
+              <label>مدة التركيز:</label>
+              <div class="duration-presets" id="timer-duration-presets">
+                <button class="preset-pill" data-minutes="10">10 دقائق</button>
+                <button class="preset-pill active" data-minutes="15">15 دقيقة</button>
+                <button class="preset-pill" data-minutes="20">20 دقيقة</button>
+                <button class="preset-pill" data-minutes="25">25 دقيقة</button>
+                <button class="preset-pill" data-minutes="30">30 دقيقة</button>
+              </div>
+            </div>
+
+            <!-- Break Duration Selection -->
+            <div class="form-group-child">
+              <label>مدة الاستراحة المستحقة بعدها:</label>
+              <div class="break-presets" id="timer-break-presets">
+                <button class="break-pill active" data-break="5">استراحة 5 دقائق ☕</button>
+                <button class="break-pill" data-break="10">استراحة 10 دقائق 🍎</button>
+                <button class="break-pill" data-break="15">استراحة 15 دقيقة 🎮</button>
+              </div>
+            </div>
+
+            <div class="timer-gentle-tip">
+              <span>🌸</span>
+              <p>تذكر يا بطل: المذاكرة خطوة بخطوة أسهل وأمتع، وإذا شعرت بالتعب فلك أن تستريح في أي وقت دون أي لوم!</p>
+            </div>
+          </div>
+
+          <!-- Right/Bottom: The Interactive Focus Dial -->
+          <div class="timer-dial-card">
+            <div class="timer-status-badge" id="timer-mode-badge">
+              <span class="badge-dot"></span>
+              <span id="timer-mode-text">جاهز للانطلاق 🚀</span>
+            </div>
+
+            <!-- Animated SVG Ring -->
+            <div class="timer-circle-wrap">
+              <svg class="timer-svg" viewBox="0 0 240 240">
+                <circle class="timer-circle-bg" cx="120" cy="120" r="100"></circle>
+                <circle class="timer-circle-progress" id="timer-progress-circle" cx="120" cy="120" r="100"></circle>
+              </svg>
+              <div class="timer-circle-inner">
+                <div class="timer-time-display" id="timer-display">15:00</div>
+                <div class="timer-session-label" id="timer-current-task-label">حل تمارين كتاب الرياضيات</div>
+              </div>
+            </div>
+
+            <!-- Cheerful Sound Effect Toggle -->
+            <div class="sound-toggle-row">
+              <label class="sound-switch-label">
+                <input type="checkbox" id="timer-chime-toggle" checked>
+                <span>صوت تنبيه رقيق ومبهج عند الانتهاء 🔔</span>
+              </label>
+            </div>
+
+            <!-- Main Big Action Controls -->
+            <div class="timer-action-buttons">
+              <button class="btn btn-timer-main" id="btn-timer-start-pause">
+                <span id="timer-btn-icon">▶️</span>
+                <span id="timer-btn-text">ابدأ الجلسة الآن</span>
+              </button>
+              <button class="btn btn-timer-secondary" id="btn-timer-reset">
+                <span>🔄 إعادة ضبط</span>
+              </button>
+              <button class="btn btn-timer-finish" id="btn-timer-early-finish">
+                <span>⭐ أتممت الجلسة بنجاح!</span>
+              </button>
+            </div>
+
+            <!-- Next Up Preview in Timer -->
+            <div class="timer-next-preview" id="timer-next-preview">
+              <span class="preview-badge">النشاط القادم:</span>
+              <span class="preview-text" id="timer-next-text">استراحة ممتعة ورسم 🌸 (16:15)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: REWARDS & STICKERS (النجوم والملصقات) -->
+      <!-- ============================================== -->
+      <section id="view-rewards" class="view-panel">
+        <!-- Star Jar Hero -->
+        <div class="rewards-hero-card">
+          <div class="jar-visual-side">
+            <div class="glass-jar">
+              <div class="jar-stars-layer" id="jar-floating-stars">
+                <!-- Stars rendered dynamically -->
+              </div>
+              <div class="jar-lid"></div>
+              <div class="jar-base-badge">برطمان الإنجاز 🍯</div>
+            </div>
+          </div>
+          <div class="jar-content-side">
+            <span class="celebrate-pill">🌟 لوحة التحفيز اللطيفة</span>
+            <h2 class="jar-title">معك الآن <span class="highlight-count" id="rewards-total-stars">12</span> نجمة ذكية!</h2>
+            <p class="jar-desc">
+              تحصل على نجمة عند إكمال أي نشاط أو جلسة تركيز. كل النجوم محفوظة لك بدون أي خصم أو ضغط!
+            </p>
+            <div class="rewards-tips-box">
+              <span>💡</span>
+              <p>نظام تحفيزي قائم على التشجيع الإيجابي المطلق، بعيداً عن التنافسية أو العقوبات.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parent-Configured Reward Goals -->
+        <div class="reward-section-block">
+          <div class="section-action-header">
+            <div>
+              <h3 class="section-title">مكافآت وليّ الأمر</h3>
+              <p class="section-subtitle">أهداف لطيفة متفق عليها مع الأسرة عند جمع النجوم</p>
+            </div>
+            <button class="btn btn-secondary-child" id="btn-parent-add-reward">
+              <span>➕ إضافة مكافأة جديدة</span>
+            </button>
+          </div>
+
+          <div class="reward-goals-grid" id="reward-goals-grid">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Sticker Album -->
+        <div class="reward-section-block">
+          <div class="section-action-header">
+            <div>
+              <h3 class="section-title">ألبوم الملصقات المبهجة 🎨</h3>
+              <p class="section-subtitle">ملصقات كرتونية يجمعها البطل مع كل إنجاز يومي</p>
+            </div>
+            <span class="sticker-count-badge" id="sticker-unlock-summary">3 من 8 ملصقات</span>
+          </div>
+
+          <div class="stickers-grid" id="stickers-album-grid">
+            <!-- Stickers rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB: SMART MINI-GAME (واحة الألعاب الذكية بإذن ولي الأمر) -->
+      <!-- ============================================== -->
+      <section id="view-game" class="view-panel">
+        <!-- Game Header / Info -->
+        <div class="game-hub-header">
+          <div class="game-title-box">
+            <span class="game-tag">🎮 واحة الترفيه المنضبطة</span>
+            <h2 class="section-title">مغامرة بطل النجوم 🚀</h2>
+            <p class="section-subtitle">لعبة لطيفة وممتعة ومحددة بالوقت تعمل حصرياً بموافقة وإشراف وليّ الأمر</p>
+          </div>
+          
+          <!-- Difficulty Mode Selector Chips -->
+          <div class="game-diff-selector-wrap" id="game-diff-chips">
+            <span class="diff-title">مستوى التحدي:</span>
+            <button type="button" class="diff-chip" data-diff="easy">🟢 ناشئ (6-8)</button>
+            <button type="button" class="diff-chip active" data-diff="medium">🟡 بطل التحدي (10 سنوات ⭐)</button>
+            <button type="button" class="diff-chip" data-diff="hard">🔴 أسطورة الفضاء 🔥</button>
+          </div>
+
+          <div class="game-status-pill" id="game-top-status-pill">
+            <span class="lock-indicator" id="game-lock-indicator-icon">🔒</span>
+            <span id="game-lock-status-text">بانتظار إذن وليّ الأمر</span>
+          </div>
+        </div>
+
+        <!-- 1. LOCKED STATE CONTAINER -->
+        <div class="game-locked-container" id="game-locked-view">
+          <div class="locked-card-illustration">
+            <div class="locked-shield-icon">🛡️</div>
+            <h3 class="locked-heading">منطقة الألعاب محميّة بإذن وليّ الأمر</h3>
+            <p class="locked-desc">
+              حتى نوازن بين الدراسة وفروض الصلاة والمرح، يتم فتح اللعبة فقط بإذن مباشر من بابا أو ماما ولمدة محددة تُغلق بعدها تلقائياً!
+            </p>
+            <div class="locked-rules-row">
+              <div class="rule-chip">⏱️ وقت محدد يختاره الوالدان</div>
+              <div class="rule-chip">❤️ 3 قلوب ومناورات نيازك وسحب رعدية</div>
+              <div class="rule-chip">🧲 قوى خارقة: مغناطيس وتيربو ودرع طاقة</div>
+              <div class="rule-chip">⭐ كسب نقاط ونجوم لبرطمان الإنجازات</div>
+            </div>
+            <button class="btn btn-primary-child btn-lg" id="btn-request-game-access">
+              <span>🔑 طلب إذن وليّ الأمر لبدء اللعب الآن</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. UNLOCKED ACTIVE GAME CONTAINER -->
+        <div class="game-active-container" id="game-active-view" style="display: none;">
+          <!-- Active Play Countdown & Scoreboard -->
+          <div class="game-hud-bar">
+            <!-- Session Countdown Timer -->
+            <div class="hud-item hud-timer">
+              <span class="hud-icon">⏳</span>
+              <div class="hud-text">
+                <span class="hud-label">جلسة اللعب:</span>
+                <span class="hud-value timer-countdown-active" id="game-hud-countdown">15:00</span>
+              </div>
+            </div>
+
+            <!-- Hero Energy Hearts -->
+            <div class="hud-item hud-lives" id="hud-lives-container">
+              <span class="hud-icon">❤️</span>
+              <div class="hud-text">
+                <span class="hud-label">طاقة البطل:</span>
+                <span class="hud-value lives-display" id="game-hud-lives">❤️❤️❤️</span>
+              </div>
+            </div>
+
+            <!-- Score -->
+            <div class="hud-item hud-score">
+              <span class="hud-icon">⭐</span>
+              <div class="hud-text">
+                <span class="hud-label">النقاط:</span>
+                <span class="hud-value" id="game-hud-score">0</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Combo Counter -->
+            <div class="hud-item hud-combo" id="hud-combo-container">
+              <span class="hud-icon">🔥</span>
+              <div class="hud-text">
+                <span class="hud-label">الكومبو:</span>
+                <span class="hud-value" id="game-hud-combo">x1</span>
+              </div>
+            </div>
+
+            <!-- Current Stage Pill -->
+            <div class="hud-item hud-stage">
+              <span class="game-stage-pill" id="game-hud-stage">☀️ المرحلة 1</span>
+            </div>
+
+            <!-- Actions: Pause & End -->
+            <div class="hud-item hud-actions">
+              <button class="btn btn-secondary-child" id="btn-game-pause">
+                <span id="game-pause-icon">⏸️</span>
+                <span id="game-pause-text">إيقاف</span>
+              </button>
+              <button class="btn btn-danger-child" id="btn-game-lock-now" title="قفل اللعبة فوراً">
+                <span>🔒 إنهاء</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Power-Ups Ribbon -->
+          <div class="game-powerup-bar" id="game-powerup-bar" style="display: none;">
+            <div class="active-powerup-pill" id="powerup-magnet" style="display: none;">
+              <span class="pu-icon">🧲</span>
+              <span class="pu-name">مغناطيس النجوم</span>
+              <span class="pu-time" id="pu-magnet-time">8s</span>
+            </div>
+            <div class="active-powerup-pill" id="powerup-turbo" style="display: none;">
+              <span class="pu-icon">⚡</span>
+              <span class="pu-name">تيربو نفاث خارق!</span>
+              <span class="pu-time" id="pu-turbo-time">5s</span>
+            </div>
+            <div class="active-powerup-pill" id="powerup-shield" style="display: none;">
+              <span class="pu-icon">🛡️</span>
+              <span class="pu-name">درع الحماية البلوري</span>
+            </div>
+          </div>
+
+          <!-- Canvas Game Frame -->
+          <div class="game-canvas-wrapper">
+            <canvas id="hero-game-canvas" width="800" height="420"></canvas>
+            
+            <!-- In-Session Run Over Overlay (Friendly Retry) -->
+            <div class="game-runover-overlay" id="game-runover-overlay" style="display: none;">
+              <div class="runover-card">
+                <div class="runover-badge">💥</div>
+                <h3 class="runover-title">محاولة بطولية رائعة!</h3>
+                <p class="runover-desc">نفدت طاقة البطل في هذه الجولة، لكن وقت لعبك لا يزال مستمراً!</p>
+                
+                <div class="runover-stats-grid">
+                  <div class="runover-stat-box">
+                    <span class="r-icon">🎯</span>
+                    <span class="r-label">نقاط الجولة</span>
+                    <strong class="r-val" id="runover-score-val">0</strong>
+                  </div>
+                  <div class="runover-stat-box highlight">
+                    <span class="r-icon">🏆</span>
+                    <span class="r-label">أعلى رقم قياسي</span>
+                    <strong class="r-val" id="runover-best-val">0</strong>
+                  </div>
+                  <div class="runover-stat-box">
+                    <span class="r-icon">⏳</span>
+                    <span class="r-label">الوقت المتبقي</span>
+                    <strong class="r-val" id="runover-time-val">12:30</strong>
+                  </div>
+                </div>
+
+                <div class="runover-actions">
+                  <button type="button" class="btn btn-primary-child btn-lg" id="btn-runover-retry">
+                    <span>🚀 انطلق بمحاولة جديدة الآن</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary-child" id="btn-runover-exit">
+                    <span>🔒 إنهاء اللعب والعودة</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile On-Screen Touch Controls -->
+            <div class="game-mobile-controls">
+              <button class="touch-control-btn btn-touch-jump" id="btn-touch-jump" aria-label="قفز">
+                <span>🚀 قفز وطيران</span>
+              </button>
+              <div class="touch-directions">
+                <button class="touch-control-btn btn-touch-dir" id="btn-touch-right" aria-label="يمين">➡️</button>
+                <button class="touch-control-btn btn-touch-dir" id="btn-touch-left" aria-label="يسار">⬅️</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="game-instructions-box">
+            <span>💡 <strong>دليل البطل (10 سنوات):</strong> اضغط (Space) أو الشاشة للتحليق والمناورة. اجمع النجوم ⭐ والكتب 📚 والقوى الخارقة (🧲 مغناطيس، ⚡ تيربو، 🛡️ درع، 💖 قلب طاقة). راوغ السحب الرعدية 🌩️ والنيازك ☄️ للحفاظ على قلوبك وزيادة الكومبو 🔥!</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 5: PARENT SETUP & SETTINGS (إعدادات ولي الأمر) -->
+      <!-- ============================================== -->
+      <section id="view-parent" class="view-panel">
+        <div class="parent-hub-header">
+          <div class="hub-title-box">
+            <span class="hub-tag">إدارة الجدول والخصوصية</span>
+            <h2 class="section-title">إعدادات وليّ الأمر الشاملة</h2>
+            <p class="section-subtitle">تخصيص كامل لمعلومات الطفل، المواد الدراسية، النوادي، وأوقات الراحة والمنبهات</p>
+          </div>
+          <div class="hub-actions">
+            <button class="btn btn-save-parent" id="btn-save-parent-settings">
+              <span>💾 حفظ جميع التغييرات</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="parent-grid-layout">
+          <!-- Card 0: Dual Account Control & Security (إدارة الحسابات ورمز ولي الأمر) -->
+          <div class="parent-card highlight-card" style="border: 2px solid #F59E0B; background: linear-gradient(135deg, rgba(254, 243, 199, 0.4), rgba(255, 255, 255, 0.95)); grid-column: 1 / -1;">
+            <div class="parent-card-header">
+              <span class="card-icon">👑</span>
+              <div>
+                <h4>نظام الحسابين المزدوج (حساب الطفل وحساب وليّ الأمر)</h4>
+                <p>تحديد الحساب النشط وحماية تبويب وليّ الأمر برمز PIN سري</p>
+              </div>
+            </div>
+
+            <div class="parent-card-body">
+              <div class="form-row-two">
+                <div class="form-group-parent">
+                  <label for="cfg-active-account">الحساب النشط حالياً:</label>
+                  <select id="cfg-active-account" class="parent-select">
+                    <option value="parent" selected>👑 حساب وليّ الأمر (يظهر فيه كل شيء بما في ذلك هذا التبويب)</option>
+                    <option value="child">👦 حساب الطفل (يخفي تبويب ولي الأمر تماماً ويحمي الإعدادات)</option>
+                  </select>
+                </div>
+
+                <div class="form-group-parent">
+                  <label for="cfg-default-account">الحساب الافتراضي عند فتح التطبيق:</label>
+                  <select id="cfg-default-account" class="parent-select">
+                    <option value="child" selected>👦 حساب الطفل (موصى به لحماية الإعدادات)</option>
+                    <option value="parent">👑 حساب وليّ الأمر</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row-two" style="margin-top: 12px;">
+                <div class="form-group-parent">
+                  <label for="cfg-parent-pin">رمز PIN السري لوليّ الأمر (لحماية الدخول):</label>
+                  <input type="password" id="cfg-parent-pin" class="parent-input" value="1234" maxlength="6" placeholder="1234">
+                </div>
+                <div class="form-group-parent" style="display: flex; align-items: flex-end;">
+                  <button type="button" class="btn btn-secondary-child w-100" id="btn-quick-switch-to-child" style="padding: 10px 14px; font-weight: 800; border-color: #3B82F6; color: #1D4ED8;">
+                    <span>👦 قفل الإعدادات والتحويل لحساب الطفل الآن</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 1: Child Identity & Avatar Customization -->
+          <div class="parent-card">
+            <div class="parent-card-header">
+              <span class="card-icon">👦</span>
+              <div>
+                <h4>بيانات الطفل والشعار الكرتوني</h4>
+                <p>تخصيص الاسم والشعار مع حماية كاملة للخصوصية</p>
+              </div>
+            </div>
+
+            <div class="parent-card-body">
+              <div class="form-row-two">
+                <div class="form-group-parent">
+                  <label for="cfg-child-name">اسم الطفل:</label>
+                  <input type="text" id="cfg-child-name" class="parent-input" value="ريان">
+                </div>
+                <div class="form-group-parent">
+                  <label for="cfg-child-age">عمر الطفل (اختياري):</label>
+                  <input type="number" id="cfg-child-age" class="parent-input" value="8" min="4" max="18">
+                </div>
+              </div>
+
+              <div class="form-group-parent">
+                <label for="cfg-app-name">اسم التطبيق المفضل (يمكن تغييره):</label>
+                <input type="text" id="cfg-app-name" class="parent-input" value="أسبوعي">
+              </div>
+
+              <!-- Avatar Personalization Section -->
+              <div class="avatar-manager-box">
+                <label class="section-mini-label">الشعار والصورة الرمزية للطفل:</label>
+                <div class="current-avatar-preview-row">
+                  <div class="avatar-frame-large">
+                    <img id="cfg-avatar-preview" src="assets/avatar_boy.jpg" alt="معاينة الشعار">
+                  </div>
+                  <div class="avatar-options-col">
+                    <div class="preset-avatar-picker">
+                      <button class="preset-avatar-btn active" data-avatar="assets/avatar_son.jpg" title="صورة البطل الكرتونية الخاصة ⭐">
+                        <img src="assets/avatar_son.jpg" alt="البطل المخصص">
+                      </button>
+                      <button class="preset-avatar-btn" data-avatar="assets/avatar_girl.jpg" title="بطلة كرتونية">
+                        <img src="assets/avatar_girl.jpg" alt="بطلة">
+                      </button>
+                      <button class="preset-avatar-btn" data-avatar="assets/logo_mascot.jpg" title="الروبوت الذكي">
+                        <img src="assets/logo_mascot.jpg" alt="روبوت">
+                      </button>
+                    </div>
+
+                    <!-- Photo Upload with Parental Consent Protection -->
+                    <div class="upload-photo-wrap">
+                      <button class="btn btn-outline-parent" id="btn-upload-child-photo">
+                        <span>📷 رفع صورة طفلك وتحويلها لنمط كرتوني</span>
+                      </button>
+                      <input type="file" id="child-photo-input" accept="image/*" style="display: none;">
+                      <p class="privacy-note">
+                        🔒 خصوصية 100%: الصورة تُعالج وتُحفظ محلياً على جهازك فقط، ولا يتم إرسال أي بيانات لأي خادم خارجي.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: School & Weekend Days & Typical Routine -->
+          <div class="parent-card">
+            <div class="parent-card-header">
+              <span class="card-icon">🏫</span>
+              <div>
+                <h4>أيام الدوام المدرسي والعطلات</h4>
+                <p>تحديد الأيام التي يذهب فيها الطفل للمدرسة وأوقات النوم</p>
+              </div>
+            </div>
+
+            <div class="parent-card-body">
+              <div class="form-group-parent">
+                <label>أيام المدرسة (اضغط لتحديد اليوم):</label>
+                <div class="days-checkbox-group" id="cfg-school-days-group">
+                  <label class="day-check-label"><input type="checkbox" value="0" checked><span>الأحد</span></label>
+                  <label class="day-check-label"><input type="checkbox" value="1" checked><span>الإثنين</span></label>
+                  <label class="day-check-label"><input type="checkbox" value="2" checked><span>الثلاثاء</span></label>
+                  <label class="day-check-label"><input type="checkbox" value="3" checked><span>الأربعاء</span></label>
+                  <label class="day-check-label"><input type="checkbox" value="4" checked><span>الخميس</span></label>
+                  <label class="day-check-label"><input type="checkbox" value="5"><span>الجمعة (عطلة)</span></label>
+                  <label class="day-check-label"><input type="checkbox" value="6"><span>السبت (عطلة)</span></label>
+                </div>
+              </div>
+
+              <div class="form-row-two">
+                <div class="form-group-parent">
+                  <label for="cfg-school-start">بداية الدوام المدرسي:</label>
+                  <input type="time" id="cfg-school-start" class="parent-input" value="07:30">
+                </div>
+                <div class="form-group-parent">
+                  <label for="cfg-school-end">نهاية الدوام المدرسي:</label>
+                  <input type="time" id="cfg-school-end" class="parent-input" value="13:30">
+                </div>
+              </div>
+
+              <div class="form-row-two">
+                <div class="form-group-parent">
+                  <label for="cfg-sleep-wake">وقت الاستيقاظ المعتاد:</label>
+                  <input type="time" id="cfg-sleep-wake" class="parent-input" value="06:30">
+                </div>
+                <div class="form-group-parent">
+                  <label for="cfg-sleep-bed">وقت النوم المعتاد:</label>
+                  <input type="time" id="cfg-sleep-bed" class="parent-input" value="20:30">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Clubs & Sports Activities Management -->
+          <div class="parent-card">
+            <div class="parent-card-header">
+              <span class="card-icon">⚽</span>
+              <div>
+                <h4>إدارة النوادي والأنشطة الرياضية</h4>
+                <p>حماية أوقات النادي تلقائياً من أي تعارض مع المذاكرة</p>
+              </div>
+            </div>
+
+            <div class="parent-card-body">
+              <div class="clubs-list-wrap" id="cfg-clubs-list">
+                <!-- Rendered dynamically -->
+              </div>
+              <button class="btn btn-outline-parent" id="btn-add-new-club">
+                <span>➕ إضافة نشاط نادٍ جديد</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 4: Reminders & Notifications -->
+          <div class="parent-card">
+            <div class="parent-card-header">
+              <span class="card-icon">🔔</span>
+              <div>
+                <h4>التنبيهات والإشعارات الرقيقة</h4>
+                <p>تنبيه الطفل والأسرة قبل مواعيد الأنشطة بكلمات مشجعة</p>
+              </div>
+            </div>
+
+            <div class="parent-card-body">
+              <div class="form-group-parent">
+                <label class="switch-row-label">
+                  <input type="checkbox" id="cfg-reminders-enable" checked>
+                  <span>تفعيل الإشعارات والتنبيهات المسبقة</span>
+                </label>
+              </div>
+
+              <div class="form-row-two">
+                <div class="form-group-parent">
+                  <label for="cfg-reminder-lead">وقت التنبيه قبل النشاط:</label>
+                  <select id="cfg-reminder-lead" class="parent-select">
+                    <option value="5">قبل 5 دقائق</option>
+                    <option value="10">قبل 10 دقائق</option>
+                    <option value="15" selected>قبل 15 دقيقة (موصى به)</option>
+                    <option value="30">قبل 30 دقيقة</option>
+                  </select>
+                </div>
+                <div class="form-group-parent">
+                  <label class="switch-row-label">
+                    <input type="checkbox" id="cfg-reminder-sound" checked>
+                    <span>نغمة صوتية هادئة</span>
+                  </label>
+                </div>
+              </div>
+
+              <button class="btn btn-outline-parent" id="btn-request-browser-notif">
+                <span>🔔 تجربة تنبيه رقيق الآن</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 5: Data Backup, Privacy & Reset -->
+          <div class="parent-card">
+            <div class="parent-card-header">
+              <span class="card-icon">💾</span>
+              <div>
+                <h4>النسخ الاحتياطي والبيانات</h4>
+                <p>حفظ بيانات الجدول كملف واسترجاعها في أي وقت</p>
+              </div>
+            </div>
+
+            <div class="parent-card-body">
+              <div class="backup-actions-grid">
+                <button class="btn btn-secondary-child" id="btn-export-data">
+                  <span>📥 تصدير الجدول كنسخة احتياطية (JSON)</span>
+                </button>
+                <button class="btn btn-secondary-child" id="btn-import-data-trigger">
+                  <span>📤 استعادة جدول محفوظ</span>
+                </button>
+                <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                <button class="btn btn-danger-child" id="btn-reset-sample">
+                  <span>🔄 إعادة تعيين للجدول الافتراضي اللطيف</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 6: Game & Screen Time Management (إعدادات وقت اللعب وألعاب البطل) -->
+          <div class="parent-card">
+            <div class="parent-card-header">
+              <span class="card-icon">🎮</span>
+              <div>
+                <h4>إعدادات وقت اللعب والألعاب (تحكم وليّ الأمر)</h4>
+                <p>تحديد مدة اللعب اليومية والأوقات المسموحة وحماية اللعبة بمسألة رياضية أو كلمة سر</p>
+              </div>
+            </div>
+
+            <div class="parent-card-body">
+              <div class="form-row-two">
+                <div class="form-group-parent">
+                  <label for="cfg-game-default-duration">المدة الافتراضية لجلسة اللعب:</label>
+                  <select id="cfg-game-default-duration" class="parent-select">
+                    <option value="10">10 دقائق (جلسة خفيفة)</option>
+                    <option value="15" selected>15 دقيقة (الموصى به)</option>
+                    <option value="20">20 دقيقة</option>
+                    <option value="30">30 دقيقة (كحد أقصى)</option>
+                  </select>
+                </div>
+
+                <div class="form-group-parent">
+                  <label for="cfg-game-difficulty">مستوى التحدي والصعوبة (يناسب عمر الطفل):</label>
+                  <select id="cfg-game-difficulty" class="parent-select">
+                    <option value="easy">🟢 ناشئ (6-8 سنوات) - قلوب لا تنتهي ولعب هادئ</option>
+                    <option value="medium" selected>🟡 بطل التحدي (10 سنوات ⭐) - 3 قلوب، نيازك، وتيربو ومغناطيس</option>
+                    <option value="hard">🔴 أسطورة الفضاء (12+ سنة 🔥) - سرعة فائقة ومناورات دقيقة</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group-parent" style="margin-top: 10px;">
+                <label for="cfg-game-auth-type">طريقة التحقق من إذن وليّ الأمر:</label>
+                <select id="cfg-game-auth-type" class="parent-select">
+                  <option value="math" selected>مسألة رياضية ذكية (تمنع الصغار تلقائياً) 🔢</option>
+                  <option value="pin">رمز PIN السري (1234) 🔒</option>
+                  <option value="both">كلاهما معاً لمزيد من الحماية 🛡️</option>
+                </select>
+              </div>
+
+              <!-- Time window restrictions -->
+              <div class="form-group-parent" style="margin-top: 12px;">
+                <label class="switch-row-label">
+                  <input type="checkbox" id="cfg-game-window-toggle" checked>
+                  <span>تحديد أوقات مسموحة للعب خلال اليوم (مثلاً بعد المدرسة والعصر) ⏰</span>
+                </label>
+              </div>
+
+              <div class="form-row-two" id="cfg-game-window-row">
+                <div class="form-group-parent">
+                  <label for="cfg-game-window-start">بداية وقت اللعب المسموح:</label>
+                  <input type="time" id="cfg-game-window-start" class="parent-input" value="16:00">
+                </div>
+                <div class="form-group-parent">
+                  <label for="cfg-game-window-end">نهاية وقت اللعب المسموح:</label>
+                  <input type="time" id="cfg-game-window-end" class="parent-input" value="20:00">
+                </div>
+              </div>
+
+              <!-- Fast Quick-Action Controls for Parents -->
+              <div class="game-parent-quick-actions" style="margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px;">
+                <button type="button" class="btn btn-primary-child" id="btn-parent-quick-grant-game">
+                  <span>🚀 منح إذن سريع (15 دقيقة الآن)</span>
+                </button>
+                <button type="button" class="btn btn-danger-child" id="btn-parent-quick-lock-game">
+                  <span>🔒 قفل اللعبة فوراً</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Mobile Navigation Bar for High Accessibility on Phones -->
+    <footer class="mobile-bottom-bar">
+      <button class="mobile-nav-btn active" data-tab="today">
+        <span class="m-icon">☀️</span>
+        <span class="m-text">اليوم</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="weekly">
+        <span class="m-icon">🗓️</span>
+        <span class="m-text">الأسبوع</span>
+      </button>
+      <button class="mobile-nav-btn highlight-btn" data-tab="timer">
+        <span class="m-icon">⏱️</span>
+        <span class="m-text">المؤقت</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="game">
+        <span class="m-icon">🎮</span>
+        <span class="m-text">اللعب 🔒</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="rewards">
+        <span class="m-icon">🏆</span>
+        <span class="m-text">النجوم</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="parent" id="mobile-tab-parent">
+        <span class="m-icon">⚙️</span>
+        <span class="m-text">وليّ الأمر</span>
+      </button>
+    </footer>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD / EDIT / RESCHEDULE SCHEDULE ITEM -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="schedule-item-modal" style="display: none;">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-item-title">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-icon" id="modal-item-badge">📝</span>
+          <h3 id="modal-item-title">إضافة نشاط للجدول</h3>
+        </div>
+        <button class="modal-close-btn" id="modal-item-close" aria-label="إغلاق">&times;</button>
+      </div>
+
+      <!-- Real-time Conflict Alert Box -->
+      <div class="conflict-alert-box" id="modal-conflict-alert" style="display: none;">
+        <span class="conflict-icon">⚠️</span>
+        <div class="conflict-details">
+          <strong id="conflict-title">تنبيه تعارض في الوقت!</strong>
+          <p id="conflict-message">هذا الوقت يتداخل مع نادي السباحة (16:30 - 17:30). نقترح اختيار موعد بديل.</p>
+        </div>
+      </div>
+
+      <form id="schedule-item-form" class="modal-form">
+        <input type="hidden" id="item-form-id" value="">
+
+        <!-- Day and Category Row -->
+        <div class="form-row-two">
+          <div class="form-group-child">
+            <label for="item-day-select">اليوم:</label>
+            <select id="item-day-select" class="child-select" required>
+              <option value="0">الأحد</option>
+              <option value="1">الإثنين</option>
+              <option value="2">الثلاثاء</option>
+              <option value="3">الأربعاء</option>
+              <option value="4">الخميس</option>
+              <option value="5">الجمعة</option>
+              <option value="6">السبت</option>
+            </select>
+          </div>
+
+          <div class="form-group-child">
+            <label for="item-category-select">نوع النشاط:</label>
+            <select id="item-category-select" class="child-select" required>
+              <option value="prayer">🕌 صلاة وفريضة</option>
+              <option value="quran">📖 درس وحفظ القرآن</option>
+              <option value="study">📚 مذاكرة دراسية</option>
+              <option value="homework">✏️ واجب مدرسي</option>
+              <option value="school">🏫 مدرسة ودوام</option>
+              <option value="club">⚽ نادي ونشاط رياضي</option>
+              <option value="rest">🌸 استراحة واسترخاء</option>
+              <option value="meal">🍎 وجبة طعام</option>
+              <option value="sleep">🌙 نوم وهدوء</option>
+              <option value="freetime">🎨 وقت حر ومرح</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group-child">
+          <label for="item-title-input">عنوان النشاط:</label>
+          <input type="text" id="item-title-input" class="child-input" placeholder="مثال: مذاكرة الرياضيات، نادي كرة القدم، استراحة سناك..." required>
+        </div>
+
+        <!-- Subject (shown if study/homework) -->
+        <div class="form-group-child" id="item-subject-row">
+          <label for="item-subject-select">المادة الدراسية (اختياري):</label>
+          <select id="item-subject-select" class="child-select">
+            <option value="">بدون مادة محددة</option>
+            <option value="math">الرياضيات 🔢</option>
+            <option value="arabic">اللغة العربية 📖</option>
+            <option value="science">العلوم الطبيعية 🔬</option>
+            <option value="english">اللغة الإنجليزية 🔤</option>
+            <option value="islamic">القرآن والتربية الإسلامية 🕌</option>
+            <option value="art">الرسم والفنون 🎨</option>
+          </select>
+        </div>
+
+        <!-- Times: Start & End -->
+        <div class="form-row-two">
+          <div class="form-group-child">
+            <label for="item-start-time">وقت البداية:</label>
+            <input type="time" id="item-start-time" class="child-input" required>
+          </div>
+          <div class="form-group-child">
+            <label for="item-end-time">وقت النهاية:</label>
+            <input type="time" id="item-end-time" class="child-input" required>
+          </div>
+        </div>
+
+        <!-- Location & Notes -->
+        <div class="form-row-two">
+          <div class="form-group-child">
+            <label for="item-location-input">المكان (اختياري):</label>
+            <input type="text" id="item-location-input" class="child-input" placeholder="مثال: غرفة المذاكرة، ملعب الحي...">
+          </div>
+          <div class="form-group-child">
+            <label for="item-flexible-select">طبيعة الموعد:</label>
+            <select id="item-flexible-select" class="child-select">
+              <option value="false">موعد ثابت محدد</option>
+              <option value="true">موعد مرن ومريح</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group-child">
+          <label for="item-notes-input">ملاحظات لطيفة أو تفاصيل الواجب:</label>
+          <input type="text" id="item-notes-input" class="child-input" placeholder="مثال: كتابة فقرة قصيرة، إحضار المنشفة...">
+        </div>
+
+        <!-- Repeat Options -->
+        <div class="form-group-child">
+          <label for="item-repeat-select">التكرار:</label>
+          <select id="item-repeat-select" class="child-select">
+            <option value="weekly">يتكرر أسبوعياً في نفس اليوم 🔁</option>
+            <option value="once">هذا الأسبوع فقط 📌</option>
+            <option value="school_days">يتكرر في كل أيام المدرسة 🏫</option>
+          </select>
+        </div>
+
+        <div class="modal-footer-actions">
+          <button type="button" class="btn btn-danger-child" id="btn-delete-item" style="display: none;">
+            <span>🗑️ حذف النشاط</span>
+          </button>
+          <div class="modal-right-actions">
+            <button type="button" class="btn btn-secondary-child" id="modal-item-cancel">
+              <span>إلغاء</span>
+            </button>
+            <button type="submit" class="btn btn-primary-child" id="btn-save-item">
+              <span>💾 حفظ في الجدول</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: PARENTAL CONSENT BEFORE PHOTO UPLOAD -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="parent-consent-modal" style="display: none;">
+    <div class="modal-card modal-small" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-icon">🔒</span>
+          <h3>تأكيد خصوصية وليّ الأمر</h3>
+        </div>
+        <button class="modal-close-btn" id="consent-modal-close">&times;</button>
+      </div>
+      <div class="modal-body-pad">
+        <div class="consent-shield-icon">🛡️</div>
+        <h4>حماية خصوصية طفلك هي أولويتنا المطلقة</h4>
+        <p>
+          نلتزم بعدم مشاركة صورة طفلك أو بياناته الشخصية مع أي خادم خارجي. 
+          الصورة المرفوعة تُحفظ محلياً على هذا المتصفح فقط وتُستخدم حصرياً كشعار كرتوني مبهج داخل التطبيق.
+        </p>
+        <div class="consent-checkbox-wrap">
+          <label>
+            <input type="checkbox" id="consent-checkbox">
+            <span>أوافق كوليّ أمر على استخدام صورة طفلي كرمز كرتوني شخصي محلياً.</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer-actions">
+        <button class="btn btn-secondary-child" id="btn-cancel-consent">تراجع</button>
+        <button class="btn btn-primary-child" id="btn-confirm-consent" disabled>متابعة واختيار الصورة 📷</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: QUICK RESCHEDULE MODAL -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="quick-reschedule-modal" style="display: none;">
+    <div class="modal-card modal-small" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-icon">🔄</span>
+          <h3>تغيير موعد النشاط</h3>
+        </div>
+        <button class="modal-close-btn" id="reschedule-modal-close">&times;</button>
+      </div>
+      <div class="modal-body-pad">
+        <p id="reschedule-item-name" style="font-weight: 700; margin-bottom: 12px; color: var(--primary-color);">حل واجب الرياضيات</p>
+        <div class="quick-options-grid">
+          <button class="quick-action-pill" data-action="next_day">نقل إلى الغد ⏩</button>
+          <button class="quick-action-pill" data-action="delay_30">تأخير 30 دقيقة ⏱️</button>
+          <button class="quick-action-pill" data-action="delay_60">تأخير ساعة واحدة ⏰</button>
+          <button class="quick-action-pill" data-action="weekend">نقل إلى عطلة نهاية الأسبوع 🎈</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: CELEBRATION MODAL (أحسنت يا بطل!) -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="celebration-modal" style="display: none;">
+    <div class="modal-card modal-small celebration-card" role="dialog" aria-modal="true">
+      <div class="celebration-badge-bounce">🌟</div>
+      <h3 class="celebration-title">أحسنت صنعاً يا بطل!</h3>
+      <p class="celebration-message" id="celebration-message-text">لقد أتممت نشاطك بنجاح وكسبت نجمة ذكية جديدة!</p>
+      <div class="celebration-star-earned">
+        <span class="earned-star-icon">⭐</span>
+        <span class="earned-label">+1 نجمة أضيفت لبرطمانك</span>
+      </div>
+      <button class="btn btn-primary-child btn-lg" id="celebration-ok-btn">
+        <span>شكراً، أنا فخور بنفسي! 🎈</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: PARENTAL PERMISSION FOR MINI-GAME -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="game-permission-modal" style="display: none;">
+    <div class="modal-card modal-small" role="dialog" aria-modal="true" aria-labelledby="game-perm-title">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-icon">🎮</span>
+          <h3 id="game-perm-title">إذن وليّ الأمر لبدء اللعب</h3>
+        </div>
+        <button class="modal-close-btn" id="game-perm-close" aria-label="إغلاق">&times;</button>
+      </div>
+      
+      <div class="modal-body-pad">
+        <div class="game-perm-shield">
+          <span class="shield-big-icon">🛡️</span>
+          <p class="perm-desc">
+            حفاظاً على توازن وقت البطل بين الصلاة والمذاكرة والمرح، يتطلب بدء اللعب موافقة وليّ الأمر وتحديد المدة المسموح بها.
+          </p>
+        </div>
+
+        <!-- Time Window Warning (if active and outside window) -->
+        <div class="window-alert-box" id="game-window-alert" style="display: none;">
+          <span class="alert-icon">⏰</span>
+          <p id="game-window-alert-text">ملاحظة: وقت اللعب المعتاد يبدأ من 16:00 إلى 20:00. يمكنك الموافقة كاستثناء الآن.</p>
+        </div>
+
+        <!-- Duration Picker -->
+        <div class="form-group-child">
+          <label>اختر مدة جلسة اللعب:</label>
+          <div class="game-duration-presets" id="game-duration-presets">
+            <button type="button" class="duration-pill" data-minutes="10">10 دقائق ⏱️</button>
+            <button type="button" class="duration-pill active" data-minutes="15">15 دقيقة ⭐ (موصى به)</button>
+            <button type="button" class="duration-pill" data-minutes="20">20 دقيقة 🎈</button>
+            <button type="button" class="duration-pill" data-minutes="30">30 دقيقة 🚀</button>
+          </div>
+        </div>
+
+        <!-- Math Challenge (Child proof) -->
+        <div class="auth-challenge-box" id="game-math-challenge-box">
+          <label for="game-math-answer">
+            <span>تأكيد وليّ الأمر (حل المسألة):</span>
+            <strong id="game-math-question" class="math-question-tag">7 × 6 = ؟</strong>
+          </label>
+          <input type="number" id="game-math-answer" class="child-input" placeholder="اكتب الناتج هنا...">
+        </div>
+
+        <!-- PIN Alternative (if configured) -->
+        <div class="auth-challenge-box" id="game-pin-challenge-box" style="display: none;">
+          <label for="game-pin-input">رمز PIN السري لولي الأمر (الافتراضي 1234):</label>
+          <input type="password" id="game-pin-input" class="child-input" placeholder="أدخل رمز PIN" maxlength="6">
+        </div>
+
+        <div class="perm-feedback-msg" id="game-perm-error" style="display: none;"></div>
+      </div>
+
+      <div class="modal-footer-actions">
+        <button type="button" class="btn btn-secondary-child" id="btn-cancel-game-perm">إلغاء</button>
+        <button type="button" class="btn btn-primary-child" id="btn-grant-game-perm">
+          <span>✅ منح الإذن وبدء اللعب الآن!</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: GAME SESSION TIMEOUT (انتهاء وقت اللعب) -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="game-timeout-modal" style="display: none;">
+    <div class="modal-card modal-small celebration-card" role="dialog" aria-modal="true">
+      <div class="celebration-badge-bounce">⏰</div>
+      <h3 class="celebration-title">انتهى وقت اللعب الممتع!</h3>
+      <p class="celebration-message">
+        عمل رائع يا بطل! التزمت بالوقت المحدد بذكاء وتفوق! 👏
+      </p>
+      
+      <div class="timeout-stats-grid">
+        <div class="stat-pill-box">
+          <span class="stat-icon">🎯</span>
+          <span class="stat-label">نقاط الجولة</span>
+          <strong class="stat-value" id="game-timeout-points">0</strong>
+        </div>
+        <div class="stat-pill-box highlight-star">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-label">نجوم إضافية للبرطمان</span>
+          <strong class="stat-value" id="game-timeout-stars">+0</strong>
+        </div>
+      </div>
+
+      <p class="timeout-encouragement">
+        أغلقت اللعبة بهدوء حتى موعد اللعب القادم بإذن بابا وماما. حان وقت الصلاة، المذاكرة، أو الراحة الممتعة! 🌸
+      </p>
+
+      <button type="button" class="btn btn-primary-child btn-lg" id="btn-game-timeout-ok">
+        <span>فخور بالتزامي! العودة لشاشة اليوم ☀️</span>
+      </button>
+    </div>
+  <!-- ============================================== -->
+  <!-- MODAL: PARENT ACCOUNT LOGIN & AUTHENTICATION -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="parent-login-modal" style="display: none;">
+    <div class="modal-card modal-small" role="dialog" aria-modal="true" aria-labelledby="parent-login-title">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-icon">👑</span>
+          <h3 id="parent-login-title">دخول حساب وليّ الأمر</h3>
+        </div>
+        <button class="modal-close-btn" id="parent-login-close" aria-label="إغلاق">&times;</button>
+      </div>
+
+      <div class="modal-body-pad">
+        <div class="game-perm-shield">
+          <span class="shield-big-icon">🔒</span>
+          <p class="perm-desc">
+            للوصول إلى تبويب وإعدادات وليّ الأمر وتعديل الجدول والمواد، يرجى كتابة رمز PIN السري لوليّ الأمر أو حل المسألة الرياضية.
+          </p>
+        </div>
+
+        <!-- PIN Input -->
+        <div class="form-group-child" id="parent-login-pin-box">
+          <label for="parent-login-pin-input">رمز PIN السري لوليّ الأمر (الافتراضي: 1234):</label>
+          <input type="password" id="parent-login-pin-input" class="child-input text-center" placeholder="••••" maxlength="6" inputmode="numeric" style="letter-spacing: 6px; font-size: 1.4rem; font-weight: 800;">
+        </div>
+
+        <!-- Optional Math Challenge -->
+        <div class="auth-challenge-box" id="parent-login-math-box" style="margin-top: 10px;">
+          <label for="parent-login-math-input">
+            <span>أو مسألة الأمان السريعة:</span>
+            <strong id="parent-login-math-question" class="math-question-tag">8 × 7 = ؟</strong>
+          </label>
+          <input type="number" id="parent-login-math-input" class="child-input" placeholder="اكتب الناتج...">
+        </div>
+
+        <div class="perm-feedback-msg" id="parent-login-error" style="display: none;"></div>
+
+        <div class="modal-actions-row" style="margin-top: 18px; display: flex; flex-direction: column; gap: 8px;">
+          <button type="button" class="btn btn-primary-child btn-lg" id="btn-confirm-parent-login">
+            <span>👑 فتح حساب وليّ الأمر</span>
+          </button>
+          <button type="button" class="btn btn-secondary-child" id="btn-cancel-parent-login">
+            <span>إلغاء والعودة لحساب الطفل 👦</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Script Modules -->
+  <script type="module" src="sample-data.js?v=2.0"></script>
+  <script type="module" src="app.js?v=2.0"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+          console.log('SW registration error:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

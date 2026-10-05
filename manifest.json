@@ -1,0 +1,26 @@
+{
+  "name": "أسبوعي - جدول المذاكرة والأنشطة للأبطال",
+  "short_name": "أسبوعي",
+  "description": "تطبيق جدول أسبوعي ودراسي لطيف وبسيط للأطفال وأولياء الأمور لتنظيم المذاكرة، الصلاة، والنوادي باللغة العربية.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAFC",
+  "theme_color": "#6366F1",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "assets/avatar_son.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/logo_mascot.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
