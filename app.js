@@ -1188,6 +1188,28 @@ class StudyPlannerApp {
     // Web Audio Context for Gentle Chimes
     this.audioCtx = null;
 
+    // Expose instance globally
+    window.app = this;
+
+    // Points Reset Migration requested by user:
+    // Reset points/stars to 0, reset claimed rewards, clear game score while preserving ALL tasks!
+    if (!localStorage.getItem('my_week_points_reset_zero_v3')) {
+      this.settings.starsEarned = 0;
+      if (this.settings.rewards) {
+        this.settings.rewards.forEach(r => { r.claimed = false; });
+      }
+      if (this.settings.gameConfig) {
+        this.settings.gameConfig.highScore = 0;
+        this.settings.gameConfig.playedTodayMinutes = 0;
+      }
+      if (this.schedule && Array.isArray(this.schedule)) {
+        this.schedule.forEach(item => { item.completed = false; });
+        this.saveSchedule();
+      }
+      this.saveSettings();
+      localStorage.setItem('my_week_points_reset_zero_v3', 'true');
+    }
+
     this.init();
   }
 
@@ -2980,6 +3002,31 @@ class StudyPlannerApp {
     this.showToast('تمت استعادة الجدول الافتراضي بنجاح! 🔄🌸', 'success');
   }
 
+  resetStarsOnly() {
+    const confirmReset = confirm('هل أنت متأكد من تصفير رصيد النجوم والبدء من 0 ⭐؟\nستظل جميع مهام الجدول والأنشطة والصلوات والقرآن كما هي تماماً دون أي حذف.');
+    if (!confirmReset) return;
+
+    this.settings.starsEarned = 0;
+    if (this.settings.rewards) {
+      this.settings.rewards.forEach(r => { r.claimed = false; });
+    }
+    if (this.settings.gameConfig) {
+      this.settings.gameConfig.highScore = 0;
+      this.settings.gameConfig.playedTodayMinutes = 0;
+    }
+    if (this.schedule && Array.isArray(this.schedule)) {
+      this.schedule.forEach(item => { item.completed = false; });
+      this.saveSchedule();
+    }
+    this.saveSettings();
+
+    this.renderHeaderAndBrand();
+    this.renderTodayView();
+    this.renderWeeklyView();
+    this.renderRewardsView();
+    this.showToast('تم تصفير رصيد النجوم بنجاح (0 ⭐) مع بقاء كامل المهام كما هي! 🌟', 'success');
+  }
+
   // ==========================================================================
   // DUAL ACCOUNT SYSTEM (حساب الطفل وحساب وليّ الأمر)
   // ==========================================================================
@@ -3561,6 +3608,11 @@ class StudyPlannerApp {
     const resetBtn = document.getElementById('btn-reset-sample');
     if (resetBtn) resetBtn.addEventListener('click', () => this.resetToSampleData());
 
+    const resetStarsBtn = document.getElementById('btn-reset-stars-only');
+    if (resetStarsBtn) {
+      resetStarsBtn.addEventListener('click', () => this.resetStarsOnly());
+    }
+
     // Browser Notification Permission Test
     const notifBtn = document.getElementById('btn-request-browser-notif');
     if (notifBtn) {
@@ -3765,6 +3817,15 @@ class StudyPlannerApp {
     }
 
     // Dual Account: Parent Login Modal Event Handlers
+    const parentLoginModal = document.getElementById('parent-login-modal');
+    if (parentLoginModal) {
+      parentLoginModal.addEventListener('click', (e) => {
+        if (e.target === parentLoginModal) {
+          this.closeParentLoginModal();
+        }
+      });
+    }
+
     const parentLoginClose = document.getElementById('parent-login-close');
     const cancelParentLogin = document.getElementById('btn-cancel-parent-login');
     if (parentLoginClose) parentLoginClose.addEventListener('click', () => this.closeParentLoginModal());

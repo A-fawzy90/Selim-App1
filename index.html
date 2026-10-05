@@ -62,7 +62,7 @@
 
           <!-- Dual Account Switcher Component (حساب الطفل / حساب ولي الأمر) -->
           <div class="account-switcher-container" id="account-switcher-container">
-            <button id="account-switch-btn" class="account-pill-btn" title="التبديل بين حساب ولي الأمر وحساب الطفل">
+            <button id="account-switch-btn" class="account-pill-btn" onclick="if(window.app){window.app.handleAccountSwitchClick();}" title="التبديل بين حساب ولي الأمر وحساب الطفل">
               <span class="acc-pill-icon" id="acc-pill-icon">👦</span>
               <span class="acc-pill-role" id="acc-pill-role">حساب الطفل</span>
               <span class="acc-pill-action" id="acc-pill-action">🔒 دخول وليّ الأمر</span>
@@ -878,6 +878,9 @@
                   <span>📤 استعادة جدول محفوظ</span>
                 </button>
                 <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                <button class="btn btn-secondary-child" id="btn-reset-stars-only" style="border-color: #F59E0B; color: #B45309; background: #FEF3C7; font-weight: 800;">
+                  <span>⭐ تصفير رصيد النجوم والمكافآت (مع الحفاظ على كامل المهام)</span>
+                </button>
                 <button class="btn btn-danger-child" id="btn-reset-sample">
                   <span>🔄 إعادة تعيين للجدول الافتراضي اللطيف</span>
                 </button>
@@ -1297,6 +1300,7 @@
         <span>فخور بالتزامي! العودة لشاشة اليوم ☀️</span>
       </button>
     </div>
+  </div>
   <!-- ============================================== -->
   <!-- MODAL: PARENT ACCOUNT LOGIN & AUTHENTICATION -->
   <!-- ============================================== -->

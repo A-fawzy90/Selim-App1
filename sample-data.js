@@ -68,7 +68,7 @@ export const defaultSettings = {
     { id: "s7", name: "قوس قزح البهيج", icon: "🌈", unlocked: false },
     { id: "s8", name: "ميدالية التفوق", icon: "🏅", unlocked: false }
   ],
-  starsEarned: 14,
+  starsEarned: 0,
   parentPin: "1234",
   activeAccount: "child", // "child" | "parent"
   defaultAccount: "child", // "child" | "parent"
@@ -101,7 +101,7 @@ export const defaultSchedule = [
     notes: "ركعتا الفجر والوضوء، وبداية يوم مليء بالنور والنشاط",
     location: "المنزل أو المسجد",
     isFlexible: false,
-    completed: true
+    completed: false
   },
   {
     id: "item-sun-1",
@@ -114,7 +114,7 @@ export const defaultSchedule = [
     notes: "يوم دراسي ممتع مع الأصدقاء والمعلمين",
     location: "المدرسة الابتدائية",
     isFlexible: false,
-    completed: true
+    completed: false
   },
   {
     id: "sun-dhuhr",
@@ -127,7 +127,7 @@ export const defaultSchedule = [
     notes: "صلاة الظهر بعد العودة من المدرسة وراحة البال",
     location: "المنزل",
     isFlexible: false,
-    completed: true
+    completed: false
   },
   {
     id: "item-sun-2",
@@ -140,7 +140,7 @@ export const defaultSchedule = [
     notes: "تناول وجبة متوازنة وشرب الماء مع الأسرة",
     location: "المنزل",
     isFlexible: true,
-    completed: true
+    completed: false
   },
   {
     id: "sun-asr",
