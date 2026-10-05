@@ -1249,23 +1249,31 @@ class StudyPlannerApp {
     // Expose instance globally
     window.app = this;
 
-    // Points Reset Migration requested by user:
-    // Reset points/stars to 0, reset claimed rewards, clear game score while preserving ALL tasks!
-    if (!localStorage.getItem('my_week_points_reset_zero_v3')) {
+    // Fresh zero-reset for test completions & stars (preserving all schedule tasks, clubs, and profile settings)
+    if (!localStorage.getItem('my_week_reset_stars_and_completions_v5')) {
       this.settings.starsEarned = 0;
+      this.settings.completions = {};
       if (this.settings.rewards) {
         this.settings.rewards.forEach(r => { r.claimed = false; });
+      }
+      if (this.settings.stickers) {
+        this.settings.stickers.forEach((s, idx) => {
+          s.unlocked = idx < 3;
+        });
       }
       if (this.settings.gameConfig) {
         this.settings.gameConfig.highScore = 0;
         this.settings.gameConfig.playedTodayMinutes = 0;
       }
       if (this.schedule && Array.isArray(this.schedule)) {
-        this.schedule.forEach(item => { item.completed = false; });
+        this.schedule.forEach(item => {
+          item.completed = false;
+          delete item.starAwarded;
+        });
         this.saveSchedule();
       }
       this.saveSettings();
-      localStorage.setItem('my_week_points_reset_zero_v3', 'true');
+      localStorage.setItem('my_week_reset_stars_and_completions_v5', 'true');
     }
 
     // Force-sync child name to 'سليم' if still 'ريان' or not set in existing stored settings
@@ -3182,20 +3190,31 @@ class StudyPlannerApp {
     this.showToast('تمت استعادة الجدول الافتراضي بنجاح! 🔄🌸', 'success');
   }
 
-  resetStarsOnly() {
-    const confirmReset = confirm('هل أنت متأكد من تصفير رصيد النجوم والبدء من 0 ⭐؟\nستظل جميع مهام الجدول والأنشطة والصلوات والقرآن كما هي تماماً دون أي حذف.');
-    if (!confirmReset) return;
+  resetStarsOnly(silent = false) {
+    if (!silent) {
+      const confirmReset = confirm('هل أنت متأكد من تصفير رصيد النجوم والأنشطة والبدء من 0 ⭐؟\nستظل جميع مهام الجدول والأنشطة والصلوات والقرآن كما هي تماماً دون أي حذف.');
+      if (!confirmReset) return;
+    }
 
     this.settings.starsEarned = 0;
+    this.settings.completions = {};
     if (this.settings.rewards) {
       this.settings.rewards.forEach(r => { r.claimed = false; });
+    }
+    if (this.settings.stickers) {
+      this.settings.stickers.forEach((s, idx) => {
+        s.unlocked = idx < 3;
+      });
     }
     if (this.settings.gameConfig) {
       this.settings.gameConfig.highScore = 0;
       this.settings.gameConfig.playedTodayMinutes = 0;
     }
     if (this.schedule && Array.isArray(this.schedule)) {
-      this.schedule.forEach(item => { item.completed = false; });
+      this.schedule.forEach(item => {
+        item.completed = false;
+        delete item.starAwarded;
+      });
       this.saveSchedule();
     }
     this.saveSettings();
@@ -3204,7 +3223,9 @@ class StudyPlannerApp {
     this.renderTodayView();
     this.renderWeeklyView();
     this.renderRewardsView();
-    this.showToast('تم تصفير رصيد النجوم بنجاح (0 ⭐) مع بقاء كامل المهام كما هي! 🌟', 'success');
+    if (!silent) {
+      this.showToast('تم تصفير رصيد النجوم والأنشطة بنجاح (0 ⭐) مع بقاء كامل المهام كما هي! 🌟', 'success');
+    }
   }
 
   // ==========================================================================
