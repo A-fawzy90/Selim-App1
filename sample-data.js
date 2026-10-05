@@ -69,7 +69,7 @@ export const defaultSettings = {
     { id: "s8", name: "ميدالية التفوق", icon: "🏅", unlocked: false }
   ],
   starsEarned: 0,
-  parentPin: "1234",
+  parentPin: "1606",
   activeAccount: "child", // "child" | "parent"
   defaultAccount: "child", // "child" | "parent"
   gameConfig: {

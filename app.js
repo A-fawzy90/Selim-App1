@@ -1227,6 +1227,10 @@ class StudyPlannerApp {
         merged.childName = 'سليم';
         merged.childAge = 9;
       }
+      // Migration: update old default PIN '1234' or missing PIN to '1606'
+      if (!merged.parentPin || merged.parentPin === '1234') {
+        merged.parentPin = '1606';
+      }
       merged.gameConfig = { ...defaultSettings.gameConfig, ...(parsed.gameConfig || {}) };
       return merged;
     } catch (e) {
@@ -2236,7 +2240,7 @@ class StudyPlannerApp {
 
     if (authType === 'pin' || authType === 'both') {
       const enteredPin = (pinInput?.value || '').trim();
-      const parentPin = (this.settings.parentPin || '1234').trim();
+      const parentPin = (this.settings.parentPin || '1606').trim();
       if (enteredPin !== parentPin) {
         isValid = false;
       }
@@ -2387,7 +2391,7 @@ class StudyPlannerApp {
     if (defaultAccountSelect) defaultAccountSelect.value = this.settings.defaultAccount || 'child';
 
     const parentPinInput = document.getElementById('cfg-parent-pin');
-    if (parentPinInput) parentPinInput.value = this.settings.parentPin || '1234';
+    if (parentPinInput) parentPinInput.value = this.settings.parentPin || '1606';
 
     // Child Profile Inputs
     const childNameInput = document.getElementById('cfg-child-name');
@@ -3109,14 +3113,17 @@ class StudyPlannerApp {
 
   openParentLoginModal() {
     this.playClickSound();
-    this.generateParentLoginMath();
 
     const pinInput = document.getElementById('parent-login-pin-input');
-    const mathInput = document.getElementById('parent-login-math-input');
     const errorEl = document.getElementById('parent-login-error');
 
-    if (pinInput) pinInput.value = '';
-    if (mathInput) mathInput.value = '';
+    if (pinInput) {
+      pinInput.value = '';
+      pinInput.type = 'password';
+    }
+    const toggleBtn = document.getElementById('btn-toggle-parent-pin-visibility');
+    if (toggleBtn) toggleBtn.textContent = '👁️';
+
     if (errorEl) {
       errorEl.textContent = '';
       errorEl.style.display = 'none';
@@ -3137,29 +3144,26 @@ class StudyPlannerApp {
 
   verifyAndLoginParent() {
     const pinInput = document.getElementById('parent-login-pin-input');
-    const mathInput = document.getElementById('parent-login-math-input');
     const errorEl = document.getElementById('parent-login-error');
 
     const enteredPin = (pinInput?.value || '').trim();
-    const correctPin = (this.settings.parentPin || '1234').trim();
+    const correctPin = (this.settings.parentPin || '1606').trim();
 
-    const mathVal = parseInt(mathInput?.value, 10);
-    const correctMath = this.parentLoginMath?.answer;
-
-    const isPinCorrect = enteredPin && (enteredPin === correctPin);
-    const isMathCorrect = !isNaN(mathVal) && (mathVal === correctMath);
-
-    if (isPinCorrect || isMathCorrect) {
+    if (enteredPin && (enteredPin === correctPin)) {
       this.closeParentLoginModal();
       this.playCelebrationSound();
       this.setAccount('parent');
       this.switchTab('parent');
     } else {
       if (errorEl) {
-        errorEl.textContent = 'رمز PIN أو إجابة المسألة غير صحيحة! يرجى التأكد والمحاولة مجدداً 🔒';
+        errorEl.textContent = 'كلمة المرور غير صحيحة! يرجى المحاولة مجدداً 🔒';
         errorEl.style.display = 'block';
       }
       this.playGentleTone(220, 'sawtooth', 0.25, 0.1);
+      if (pinInput) {
+        pinInput.focus();
+        pinInput.select();
+      }
     }
   }
 
@@ -3851,12 +3855,15 @@ class StudyPlannerApp {
       });
     }
 
-    const parentMathInput = document.getElementById('parent-login-math-input');
-    if (parentMathInput) {
-      parentMathInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.verifyAndLoginParent();
+    const togglePinBtn = document.getElementById('btn-toggle-parent-pin-visibility');
+    if (togglePinBtn && parentPinInput) {
+      togglePinBtn.addEventListener('click', () => {
+        if (parentPinInput.type === 'password') {
+          parentPinInput.type = 'text';
+          togglePinBtn.textContent = '🙈';
+        } else {
+          parentPinInput.type = 'password';
+          togglePinBtn.textContent = '👁️';
         }
       });
     }

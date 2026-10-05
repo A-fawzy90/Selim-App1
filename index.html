@@ -674,8 +674,8 @@
 
               <div class="form-row-two" style="margin-top: 12px;">
                 <div class="form-group-parent">
-                  <label for="cfg-parent-pin">رمز PIN السري لوليّ الأمر (لحماية الدخول):</label>
-                  <input type="password" id="cfg-parent-pin" class="parent-input" value="1234" maxlength="6" placeholder="1234">
+                  <label for="cfg-parent-pin">كلمة مرور وليّ الأمر (لحماية الدخول):</label>
+                  <input type="password" id="cfg-parent-pin" class="parent-input" value="1606" maxlength="8" placeholder="••••">
                 </div>
                 <div class="form-group-parent" style="display: flex; align-items: flex-end;">
                   <button type="button" class="btn btn-secondary-child w-100" id="btn-quick-switch-to-child" style="padding: 10px 14px; font-weight: 800; border-color: #3B82F6; color: #1D4ED8;">
@@ -924,7 +924,7 @@
                 <label for="cfg-game-auth-type">طريقة التحقق من إذن وليّ الأمر:</label>
                 <select id="cfg-game-auth-type" class="parent-select">
                   <option value="math" selected>مسألة رياضية ذكية (تمنع الصغار تلقائياً) 🔢</option>
-                  <option value="pin">رمز PIN السري (1234) 🔒</option>
+                  <option value="pin">رمز PIN السري لوليّ الأمر 🔒</option>
                   <option value="both">كلاهما معاً لمزيد من الحماية 🛡️</option>
                 </select>
               </div>
@@ -1252,8 +1252,8 @@
 
         <!-- PIN Alternative (if configured) -->
         <div class="auth-challenge-box" id="game-pin-challenge-box" style="display: none;">
-          <label for="game-pin-input">رمز PIN السري لولي الأمر (الافتراضي 1234):</label>
-          <input type="password" id="game-pin-input" class="child-input" placeholder="أدخل رمز PIN" maxlength="6">
+          <label for="game-pin-input">كلمة مرور وليّ الأمر:</label>
+          <input type="password" id="game-pin-input" class="child-input" placeholder="أدخل كلمة المرور" maxlength="8">
         </div>
 
         <div class="perm-feedback-msg" id="game-perm-error" style="display: none;"></div>
@@ -1318,23 +1318,17 @@
         <div class="game-perm-shield">
           <span class="shield-big-icon">🔒</span>
           <p class="perm-desc">
-            للوصول إلى تبويب وإعدادات وليّ الأمر وتعديل الجدول والمواد، يرجى كتابة رمز PIN السري لوليّ الأمر أو حل المسألة الرياضية.
+            للوصول إلى تبويب وإعدادات وليّ الأمر وتعديل الجدول والأنشطة، يرجى إدخال كلمة المرور.
           </p>
         </div>
 
-        <!-- PIN Input -->
+        <!-- Password Input -->
         <div class="form-group-child" id="parent-login-pin-box">
-          <label for="parent-login-pin-input">رمز PIN السري لوليّ الأمر (الافتراضي: 1234):</label>
-          <input type="password" id="parent-login-pin-input" class="child-input text-center" placeholder="••••" maxlength="6" inputmode="numeric" style="letter-spacing: 6px; font-size: 1.4rem; font-weight: 800;">
-        </div>
-
-        <!-- Optional Math Challenge -->
-        <div class="auth-challenge-box" id="parent-login-math-box" style="margin-top: 10px;">
-          <label for="parent-login-math-input">
-            <span>أو مسألة الأمان السريعة:</span>
-            <strong id="parent-login-math-question" class="math-question-tag">8 × 7 = ؟</strong>
-          </label>
-          <input type="number" id="parent-login-math-input" class="child-input" placeholder="اكتب الناتج...">
+          <label for="parent-login-pin-input">كلمة مرور وليّ الأمر:</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input type="password" id="parent-login-pin-input" class="child-input text-center" placeholder="••••" maxlength="8" inputmode="numeric" style="letter-spacing: 6px; font-size: 1.4rem; font-weight: 800; width: 100%; padding-left: 44px;">
+            <button type="button" id="btn-toggle-parent-pin-visibility" title="إظهار / إخفاء كلمة المرور" style="position: absolute; left: 10px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); padding: 4px;">👁️</button>
+          </div>
         </div>
 
         <div class="perm-feedback-msg" id="parent-login-error" style="display: none;"></div>
