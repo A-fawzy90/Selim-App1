@@ -1209,8 +1209,6 @@ class StudyPlannerApp {
     this.schedule = this.loadSchedule();
     
     // UI Navigation State
-    const now = new Date();
-    this.currentDayIndex = now.getDay(); // 0 is Sunday, 1 Monday, etc.
     this.selectedWeeklyDay = this.currentDayIndex;
     this.todayFilter = 'all';
     this.activeTab = 'today';
