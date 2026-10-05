@@ -85,7 +85,11 @@ class StarHeroGame {
   setDifficulty(diff) {
     this.difficulty = diff;
     this.maxLives = (diff === 'easy') ? Infinity : 3;
-    this.lives = this.maxLives;
+    if (!this.isRunning) {
+      this.lives = this.maxLives;
+    } else {
+      this.lives = Math.min(this.lives, this.maxLives);
+    }
     this.app.updateGameHud();
   }
 
@@ -108,8 +112,10 @@ class StarHeroGame {
         e.preventDefault();
         triggerJump();
       } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
         this.player.x = Math.min(this.player.x + 22, 380);
       } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
         this.player.x = Math.max(this.player.x - 22, 60);
       }
     });
@@ -196,6 +202,7 @@ class StarHeroGame {
     this.scorePopups = [];
     this.speedStreaks = [];
     this.frameCount = 0;
+    this.lastTimestamp = performance.now();
 
     const overlay = document.getElementById('game-runover-overlay');
     if (overlay) overlay.style.display = 'none';
@@ -217,8 +224,9 @@ class StarHeroGame {
   }
 
   resume() {
-    if (!this.isRunning) {
+    if (!this.isRunning && this.lives > 0) {
       this.isRunning = true;
+      this.lastTimestamp = performance.now();
       this.loop();
     }
   }
@@ -229,24 +237,29 @@ class StarHeroGame {
     this.ctx.clearRect(0, 0, this.width, this.height);
   }
 
-  loop() {
+  loop(timestamp = performance.now()) {
     if (!this.isRunning) return;
-    this.update();
+    if (!this.lastTimestamp) this.lastTimestamp = timestamp;
+    const deltaMs = Math.min(timestamp - this.lastTimestamp, 100);
+    this.lastTimestamp = timestamp;
+    const timeScale = deltaMs / (1000 / 60);
+
+    this.update(timeScale);
     this.render();
-    this.animId = requestAnimationFrame(() => this.loop());
+    this.animId = requestAnimationFrame((ts) => this.loop(ts));
   }
 
-  update() {
-    this.frameCount++;
-    this.player.capeWave += 0.16;
+  update(timeScale = 1) {
+    this.frameCount += timeScale;
+    this.player.capeWave += 0.16 * timeScale;
 
     if (this.cameraShake > 0) {
-      this.cameraShake--;
+      this.cameraShake = Math.max(0, this.cameraShake - timeScale);
     }
 
     // Power-up timers
-    if (this.powerups.magnet > 0) this.powerups.magnet--;
-    if (this.powerups.turbo > 0) this.powerups.turbo--;
+    if (this.powerups.magnet > 0) this.powerups.magnet = Math.max(0, this.powerups.magnet - timeScale);
+    if (this.powerups.turbo > 0) this.powerups.turbo = Math.max(0, this.powerups.turbo - timeScale);
 
     // Update power-up DOM bar
     const puBar = document.getElementById('game-powerup-bar');
@@ -274,7 +287,7 @@ class StarHeroGame {
 
     // Combo timer
     if (this.comboTimer > 0) {
-      this.comboTimer--;
+      this.comboTimer -= timeScale;
       if (this.comboTimer <= 0) {
         this.combo = 0;
         this.app.updateGameHud();
@@ -307,8 +320,8 @@ class StarHeroGame {
     if (this.powerups.turbo > 0) stageSpeed *= 1.5;
 
     // Physics
-    this.player.vy += this.player.gravity;
-    this.player.y += this.player.vy;
+    this.player.vy += this.player.gravity * timeScale;
+    this.player.y += this.player.vy * timeScale;
 
     // Screen bounds
     if (this.player.y < 35) {
@@ -435,15 +448,16 @@ class StarHeroGame {
       }
     }
 
-    // Magnet: Pull collectibles toward player
+    // Magnet: Pull collectibles toward player (both horizontally & vertically)
     if (this.powerups.magnet > 0) {
       this.collectibles.forEach(c => {
         const dx = this.player.x - c.x;
         const dy = this.player.y - c.y;
         const dist = Math.hypot(dx, dy);
-        if (dist < 260) {
-          c.x += (dx / dist) * 8.5;
-          c.y += (dy / dist) * 8.5;
+        if (dist < 260 && dist > 1) {
+          const pull = 8.5 * timeScale;
+          c.x += (dx / dist) * pull;
+          c.baseY += (dy / dist) * pull;
         }
       });
     }
@@ -451,7 +465,7 @@ class StarHeroGame {
     // Update Collectibles
     for (let i = this.collectibles.length - 1; i >= 0; i--) {
       const c = this.collectibles[i];
-      c.x -= c.speed;
+      c.x -= c.speed * timeScale;
       c.y = c.baseY + Math.sin(this.frameCount * 0.08 + c.floatOffset) * 12;
 
       // Collision check with player
@@ -536,7 +550,7 @@ class StarHeroGame {
     // Update Obstacles & Collision Check
     for (let i = this.obstacles.length - 1; i >= 0; i--) {
       const obs = this.obstacles[i];
-      obs.x -= obs.speed;
+      obs.x -= obs.speed * timeScale;
 
       if (obs.type === 'meteor') {
         obs.y += obs.vy || 0.5;
@@ -564,7 +578,7 @@ class StarHeroGame {
 
       // Special check: storm cloud lightning bolt
       if (obs.type === 'storm_cloud' && !isHit) {
-        const isUnderCloud = Math.abs(this.player.x - obs.x) < 22 && this.player.y > obs.y && this.player.y < obs.y + 110;
+        const isUnderCloud = Math.abs(this.player.x - obs.x) < 28 && this.player.y > obs.y && this.player.y < obs.y + 110;
         const isLightningActive = (obs.lightningTimer % 70) > 45;
         if (isUnderCloud && isLightningActive) {
           isHit = true;
@@ -904,10 +918,10 @@ class StarHeroGame {
     this.ctx.save();
     this.ctx.fillStyle = color;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, 22 * scale, 0, Math.PI * 2);
-    this.ctx.arc(x + 20 * scale, y - 8 * scale, 26 * scale, 0, Math.PI * 2);
-    this.ctx.arc(x + 45 * scale, y, 22 * scale, 0, Math.PI * 2);
-    this.ctx.arc(x + 22 * scale, y + 10 * scale, 18 * scale, 0, Math.PI * 2);
+    this.ctx.arc(x - 20 * scale, y, 20 * scale, 0, Math.PI * 2);
+    this.ctx.arc(x, y - 8 * scale, 25 * scale, 0, Math.PI * 2);
+    this.ctx.arc(x + 20 * scale, y, 20 * scale, 0, Math.PI * 2);
+    this.ctx.arc(x, y + 8 * scale, 16 * scale, 0, Math.PI * 2);
     this.ctx.fill();
     this.ctx.restore();
   }
@@ -932,12 +946,12 @@ class StarHeroGame {
       this.ctx.textBaseline = 'middle';
       this.ctx.fillText('☄️', obs.x, obs.y);
     } else if (obs.type === 'storm_cloud') {
-      // Dark Thundercloud
+      // Dark Thundercloud (Centered at obs.x, obs.y)
       this.ctx.fillStyle = '#334155';
       this.ctx.beginPath();
-      this.ctx.arc(obs.x, obs.y, 24, 0, Math.PI * 2);
-      this.ctx.arc(obs.x + 20, obs.y - 10, 28, 0, Math.PI * 2);
-      this.ctx.arc(obs.x + 42, obs.y, 22, 0, Math.PI * 2);
+      this.ctx.arc(obs.x - 20, obs.y, 22, 0, Math.PI * 2);
+      this.ctx.arc(obs.x, obs.y - 8, 26, 0, Math.PI * 2);
+      this.ctx.arc(obs.x + 20, obs.y, 22, 0, Math.PI * 2);
       this.ctx.fill();
 
       // Lightning bolt periodically firing down
@@ -1141,6 +1155,51 @@ class StarHeroGame {
 }
 
 class StudyPlannerApp {
+  // Utility: HTML Escaping to prevent XSS
+  escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Utility: Dynamic current day calculation
+  get currentDayIndex() {
+    return new Date().getDay();
+  }
+
+  // Utility: Date-based completion tracking
+  getTodayDateString() {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  getDateStringForDay(dayIndex) {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const diff = dayIndex - currentDay;
+    const target = new Date(now);
+    target.setDate(now.getDate() + diff);
+    const year = target.getFullYear();
+    const month = String(target.getMonth() + 1).padStart(2, '0');
+    const day = String(target.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  isItemCompleted(item, dateStr = null) {
+    if (!item) return false;
+    const targetDate = dateStr || this.getTodayDateString();
+    const completions = this.settings.completions || {};
+    const list = completions[targetDate] || [];
+    return list.includes(String(item.id)) || Boolean(item.completed);
+  }
+
   constructor() {
     this.STORAGE_KEY_SETTINGS = 'my_week_settings_v1';
     this.STORAGE_KEY_SCHEDULE = 'my_week_schedule_v1';
@@ -1187,6 +1246,7 @@ class StudyPlannerApp {
 
     // Web Audio Context for Gentle Chimes
     this.audioCtx = null;
+    this.notifiedReminders = new Set();
 
     // Expose instance globally
     window.app = this;
@@ -1215,8 +1275,12 @@ class StudyPlannerApp {
       this.settings.childName = 'سليم';
       this.settings.childAge = 9;
     }
-    if (!this.settings.parentPin || this.settings.parentPin === '1234') {
-      this.settings.parentPin = '1606';
+    // One-time default PIN migration to '1606' (does not overwrite parent's custom PIN on subsequent reloads)
+    if (!localStorage.getItem('my_week_migrated_pin_1606_v1')) {
+      if (!this.settings.parentPin || this.settings.parentPin === '1234') {
+        this.settings.parentPin = '1606';
+      }
+      localStorage.setItem('my_week_migrated_pin_1606_v1', 'true');
     }
     this.saveSettings();
 
@@ -1227,25 +1291,24 @@ class StudyPlannerApp {
   // Persistence & Storage
   // ==========================================================================
   loadSettings() {
+    const cloneDefaults = () => (typeof structuredClone === 'function' ? structuredClone(defaultSettings) : JSON.parse(JSON.stringify(defaultSettings)));
     try {
       const saved = localStorage.getItem(this.STORAGE_KEY_SETTINGS);
-      if (!saved) return { ...defaultSettings };
+      if (!saved) return cloneDefaults();
       const parsed = JSON.parse(saved);
-      const merged = { ...defaultSettings, ...parsed };
-      // Migration: update old default name 'ريان' or missing name to 'سليم' and age 9
+      const base = cloneDefaults();
+      const merged = { ...base, ...parsed };
       if (!merged.childName || merged.childName === 'ريان') {
         merged.childName = 'سليم';
         merged.childAge = 9;
       }
-      // Migration: update old default PIN '1234' or missing PIN to '1606'
-      if (!merged.parentPin || merged.parentPin === '1234') {
-        merged.parentPin = '1606';
-      }
-      merged.gameConfig = { ...defaultSettings.gameConfig, ...(parsed.gameConfig || {}) };
+      merged.gameConfig = { ...base.gameConfig, ...(parsed.gameConfig || {}) };
+      merged.reminders = { ...base.reminders, ...(parsed.reminders || {}) };
+      merged.completions = parsed.completions || {};
       return merged;
     } catch (e) {
       console.error('Error loading settings from localStorage', e);
-      return { ...defaultSettings };
+      return cloneDefaults();
     }
   }
 
@@ -1303,7 +1366,7 @@ class StudyPlannerApp {
   }
 
   playGentleTone(frequency, type = 'sine', duration = 0.3, gainLevel = 0.15) {
-    if (!this.settings.reminders.soundEnabled) return;
+    if (!this.settings?.reminders?.soundEnabled) return;
     try {
       this.initAudio();
       if (!this.audioCtx) return;
@@ -1411,6 +1474,14 @@ class StudyPlannerApp {
   // Initialization & UI Binding
   // ==========================================================================
   init() {
+    this.initHeroGame();
+    this.setupEventListeners();
+    this.setupConflictListener();
+    this.startLiveClockCheck();
+    this.renderAllViews();
+  }
+
+  renderAllViews() {
     this.applyTheme(this.settings.theme || 'light');
     this.initAccountSystem();
     this.renderHeaderAndBrand();
@@ -1420,10 +1491,6 @@ class StudyPlannerApp {
     this.renderRewardsView();
     this.renderGameView();
     this.renderParentView();
-    this.initHeroGame();
-    this.setupEventListeners();
-    this.setupConflictListener();
-    this.startLiveClockCheck();
   }
 
   applyTheme(theme) {
@@ -1505,9 +1572,10 @@ class StudyPlannerApp {
       .filter(item => item.day === todayIndex)
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
+    const todayStr = this.getTodayDateString();
     // Progress Calculation
     const totalToday = todayItems.length;
-    const completedToday = todayItems.filter(i => i.completed).length;
+    const completedToday = todayItems.filter(i => this.isItemCompleted(i, todayStr)).length;
     const progressPercent = totalToday > 0 ? Math.round((completedToday / totalToday) * 100) : 100;
 
     const fillBar = document.getElementById('today-progress-fill');
@@ -1549,13 +1617,14 @@ class StudyPlannerApp {
 
       todayItems.forEach(item => {
         const catDef = CATEGORY_DEFINITIONS[item.category] || CATEGORY_DEFINITIONS.study;
+        const isDone = this.isItemCompleted(item, todayStr);
         const card = document.createElement('div');
-        card.className = `timeline-card ${item.completed ? 'completed' : ''}`;
+        card.className = `timeline-card ${isDone ? 'completed' : ''}`;
         card.id = `item-card-${item.id}`;
 
         const isFlexTag = item.isFlexible ? `<span class="flexible-badge">وقت مرن 🌸</span>` : '';
-        const locationTag = item.location ? `<span>📍 ${item.location}</span>` : '';
-        const notesTag = item.notes ? `<p class="card-notes">📝 ${item.notes}</p>` : '';
+        const locationTag = item.location ? `<span>📍 ${this.escapeHtml(item.location)}</span>` : '';
+        const notesTag = item.notes ? `<p class="card-notes">📝 ${this.escapeHtml(item.notes)}</p>` : '';
 
         card.innerHTML = `
           <div class="timeline-side-indicator" style="background-color: ${catDef.color};"></div>
@@ -1571,7 +1640,7 @@ class StudyPlannerApp {
                 <span class="time-badge">${this.formatTimeRange(item.startTime, item.endTime)}</span>
                 ${isFlexTag}
               </div>
-              <h4 class="card-item-title">${item.title}</h4>
+              <h4 class="card-item-title">${this.escapeHtml(item.title)}</h4>
               ${notesTag}
               <div class="card-meta-row">
                 ${locationTag}
@@ -1584,8 +1653,8 @@ class StudyPlannerApp {
                 <span>⏱️ ركز الآن</span>
               </button>
             ` : ''}
-            <button class="btn btn-done-check ${item.completed ? 'is-done' : ''}" data-id="${item.id}" title="أنجزت النشاط">
-              <span>${item.completed ? 'أنجزت! ✨' : 'إنجاز 👍'}</span>
+            <button class="btn btn-done-check ${isDone ? 'is-done' : ''}" data-id="${item.id}" data-date="${todayStr}" title="أنجزت النشاط">
+              <span>${isDone ? 'أنجزت! ✨' : 'إنجاز 👍'}</span>
             </button>
             <button class="btn-card-more" data-id="${item.id}" title="خيارات أخرى (تعديل، إعادة جدولة)">
               <span>⚙️</span>
@@ -1606,10 +1675,26 @@ class StudyPlannerApp {
       return;
     }
 
-    // Find the next incomplete item, or the first item
-    const nextItem = todayItems.find(i => !i.completed) || todayItems[0];
-    const nextIndex = todayItems.indexOf(nextItem);
-    const followingItem = todayItems[nextIndex + 1];
+    const todayStr = this.getTodayDateString();
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    // Sort items chronologically
+    const sorted = [...todayItems].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    // Find chronologically closest incomplete activity
+    let nextItem = sorted.find(i => {
+      const isDone = this.isItemCompleted(i, todayStr);
+      const endMin = this.timeToMinutes(i.endTime);
+      return !isDone && endMin >= currentMinutes;
+    });
+
+    if (!nextItem) {
+      nextItem = sorted.find(i => !this.isItemCompleted(i, todayStr)) || sorted[0];
+    }
+
+    const nextIndex = sorted.indexOf(nextItem);
+    const followingItem = sorted[nextIndex + 1];
 
     const catDef = CATEGORY_DEFINITIONS[nextItem.category] || CATEGORY_DEFINITIONS.study;
     const followingText = followingItem ? 
@@ -1625,14 +1710,14 @@ class StudyPlannerApp {
           </div>
           <div class="upcoming-text">
             <span class="upcoming-label">${catDef.label} - الموعد الأقرب</span>
-            <h3 class="upcoming-title">${nextItem.title}</h3>
+            <h3 class="upcoming-title">${this.escapeHtml(nextItem.title)}</h3>
             <span class="upcoming-time-place">⏰ ${this.formatTimeRange(nextItem.startTime, nextItem.endTime)} ${nextItem.location ? ` • 📍 ${nextItem.location}` : ''}</span>
             <span class="upcoming-next-inline">🌸 ${followingText}</span>
           </div>
         </div>
         <div class="upcoming-actions-col">
-          <button class="btn btn-done-check ${nextItem.completed ? 'is-done' : ''}" data-id="${nextItem.id}">
-            <span>${nextItem.completed ? 'أنجزت! ✨' : 'أنجزت الآن 🌟'}</span>
+          <button class="btn btn-done-check ${this.isItemCompleted(nextItem, todayStr) ? 'is-done' : ''}" data-id="${nextItem.id}" data-date="${todayStr}">
+            <span>${this.isItemCompleted(nextItem, todayStr) ? 'أنجزت! ✨' : 'أنجزت الآن 🌟'}</span>
           </button>
           ${nextItem.category === 'study' || nextItem.category === 'homework' ? `
             <button class="btn btn-primary-child btn-quick-timer" data-id="${nextItem.id}">
@@ -1730,10 +1815,12 @@ class StudyPlannerApp {
         });
       }
     } else {
+      const dayDateStr = this.getDateStringForDay(this.selectedWeeklyDay);
       dayItems.forEach(item => {
         const catDef = CATEGORY_DEFINITIONS[item.category] || CATEGORY_DEFINITIONS.study;
+        const isDone = this.isItemCompleted(item, dayDateStr);
         const row = document.createElement('div');
-        row.className = `timeline-card ${item.completed ? 'completed' : ''}`;
+        row.className = `timeline-card ${isDone ? 'completed' : ''}`;
         row.innerHTML = `
           <div class="timeline-side-indicator" style="background-color: ${catDef.color};"></div>
           <div class="card-main-content">
@@ -1748,13 +1835,13 @@ class StudyPlannerApp {
                 <span class="time-badge">${this.formatTimeRange(item.startTime, item.endTime)}</span>
                 ${item.isFlexible ? '<span class="flexible-badge">وقت مرن</span>' : ''}
               </div>
-              <h4 class="card-item-title">${item.title}</h4>
-              ${item.notes ? `<p class="card-notes">${item.notes}</p>` : ''}
+              <h4 class="card-item-title">${this.escapeHtml(item.title)}</h4>
+              ${item.notes ? `<p class="card-notes">${this.escapeHtml(item.notes)}</p>` : ''}
             </div>
           </div>
           <div class="card-actions">
-            <button class="btn btn-done-check ${item.completed ? 'is-done' : ''}" data-id="${item.id}">
-              <span>${item.completed ? 'أنجزت! ✨' : 'تم'}</span>
+            <button class="btn btn-done-check ${isDone ? 'is-done' : ''}" data-id="${item.id}" data-date="${dayDateStr}">
+              <span>${isDone ? 'أنجزت! ✨' : 'تم'}</span>
             </button>
             <button class="btn btn-secondary-child" data-action="reschedule" data-id="${item.id}" title="نقل لموعد آخر">
               <span>🔄 نقل</span>
@@ -1869,7 +1956,7 @@ class StudyPlannerApp {
     this.updateTimerDisplay();
   }
 
-  pauseTimer() {
+  pauseTimer(silent = false) {
     this.playClickSound();
     this.timer.running = false;
     if (this.timer.intervalId) {
@@ -1880,17 +1967,19 @@ class StudyPlannerApp {
     if (indicator) indicator.style.display = 'none';
 
     this.updateTimerDisplay();
-    this.showToast('تم إيقاف المؤقت مؤقتاً، خذ نفساً عميقاً 🌸', 'info');
+    if (!silent) {
+      this.showToast('تم إيقاف المؤقت مؤقتاً، خذ نفساً عميقاً 🌸', 'info');
+    }
   }
 
   resetTimer() {
-    this.pauseTimer();
+    this.pauseTimer(true);
     this.timer.remainingSeconds = this.timer.totalSeconds;
     this.updateTimerDisplay();
   }
 
   handleTimerFinished() {
-    this.pauseTimer();
+    this.pauseTimer(true);
     this.playTimerCompleteSound();
 
     if (this.timer.mode === 'study') {
@@ -1919,8 +2008,12 @@ class StudyPlannerApp {
   }
 
   completeSessionEarly() {
-    // Guilt-free manual finish
-    this.pauseTimer();
+    const elapsedSeconds = this.timer.totalSeconds - this.timer.remainingSeconds;
+    this.pauseTimer(true);
+    if (elapsedSeconds < 60) {
+      this.showToast('الجلسة قصيرة جداً (أقل من دقيقة)، واصل التركيز قليلاً لكسب النجمة! ⏱️', 'info');
+      return;
+    }
     this.settings.starsEarned = (this.settings.starsEarned || 0) + 1;
     this.saveSettings();
     this.renderHeaderAndBrand();
@@ -1999,19 +2092,19 @@ class StudyPlannerApp {
       stickersGrid.innerHTML = '';
       let unlockedCount = 0;
 
-      (this.settings.stickers || []).forEach(sticker => {
-        // Unlock criteria: 1 sticker unlocked for every 3 stars earned
-        const shouldUnlock = totalStars >= 3;
-        const isUnlocked = sticker.unlocked || shouldUnlock;
+      (this.settings.stickers || []).forEach((sticker, idx) => {
+        // 1 sticker unlocked for every 3 stars earned
+        const starsNeeded = (idx + 1) * 3;
+        const isUnlocked = Boolean(sticker.unlocked) || totalStars >= starsNeeded;
         if (isUnlocked) unlockedCount++;
 
         const box = document.createElement('div');
         box.className = `sticker-box ${isUnlocked ? 'unlocked' : 'locked'}`;
         box.innerHTML = `
           <span class="sticker-icon-big">${sticker.icon}</span>
-          <span class="sticker-name">${sticker.name}</span>
+          <span class="sticker-name">${this.escapeHtml(sticker.name)}</span>
           <span style="font-size: 0.72rem; color: ${isUnlocked ? '#15803D' : 'var(--text-muted)'}; font-weight: 700;">
-            ${isUnlocked ? 'مفتوح ومبهج ✨' : 'يُفتح مع إنجازاتك'}
+            ${isUnlocked ? 'مفتوح ومبهج ✨' : `يحتاج ${starsNeeded} ⭐`}
           </span>
         `;
         stickersGrid.appendChild(box);
@@ -2089,8 +2182,12 @@ class StudyPlannerApp {
     // Dynamic Combo Multiplier
     const comboEl = document.getElementById('game-hud-combo');
     if (comboEl && this.heroGame) {
-      const combo = this.heroGame.combo || 1;
-      comboEl.textContent = combo >= 4 ? `x${combo} 🔥` : `x${combo}`;
+      const combo = this.heroGame.combo || 0;
+      let mult = 1;
+      if (combo >= 10) mult = 5;
+      else if (combo >= 6) mult = 3;
+      else if (combo >= 3) mult = 2;
+      comboEl.textContent = mult > 1 ? `x${mult} مضاعف 🔥 (${combo})` : (combo > 0 ? `${combo} متتالي` : 'x1');
     }
 
     // Stage Pill
@@ -2361,8 +2458,8 @@ class StudyPlannerApp {
       this.heroGame.stop();
     }
 
-    // Convert score to stars (1 star per 60 points, min 1)
-    const earnedStars = Math.max(1, Math.floor(this.gameSession.score / 60));
+    // Convert score to stars (1 star per 60 points, 0 if score is 0)
+    const earnedStars = this.gameSession.score > 0 ? Math.max(1, Math.floor(this.gameSession.score / 60)) : 0;
     this.settings.starsEarned = (this.settings.starsEarned || 0) + earnedStars;
     this.saveSettings();
     this.renderHeaderAndBrand();
@@ -2545,6 +2642,9 @@ class StudyPlannerApp {
     const defaultAccountSelect = document.getElementById('cfg-default-account');
     const parentPinInput = document.getElementById('cfg-parent-pin');
 
+    if (activeAccountSelect && activeAccountSelect.value && activeAccountSelect.value !== this.currentAccount) {
+      this.setAccount(activeAccountSelect.value);
+    }
     if (defaultAccountSelect) {
       this.settings.defaultAccount = defaultAccountSelect.value;
     }
@@ -2729,6 +2829,12 @@ class StudyPlannerApp {
       modalTitle.textContent = 'تعديل نشاط في الجدول';
       deleteBtn.style.display = 'inline-flex';
 
+      const repeatSelect = document.getElementById('item-repeat-select');
+      if (repeatSelect) {
+        repeatSelect.value = 'weekly';
+        repeatSelect.disabled = true;
+      }
+
       document.getElementById('item-form-id').value = item.id;
       document.getElementById('item-day-select').value = item.day;
       document.getElementById('item-category-select').value = item.category;
@@ -2743,6 +2849,12 @@ class StudyPlannerApp {
       modalTitle.textContent = 'إضافة نشاط جديد للجدول';
       deleteBtn.style.display = 'none';
       form.reset();
+
+      const repeatSelect = document.getElementById('item-repeat-select');
+      if (repeatSelect) {
+        repeatSelect.value = 'weekly';
+        repeatSelect.disabled = false;
+      }
 
       document.getElementById('item-form-id').value = '';
       document.getElementById('item-day-select').value = prefillDay !== null ? prefillDay : this.currentDayIndex;
@@ -2800,20 +2912,23 @@ class StudyPlannerApp {
       completed: false
     };
 
-    // If repeat for all school days
-    if (repeatOption === 'school_days') {
-      this.settings.schoolDays.forEach(schoolDay => {
-        const itemCopy = {
-          ...newItem,
-          id: `item-${Date.now()}-${schoolDay}`,
-          day: schoolDay
-        };
-        this.schedule.push(itemCopy);
-      });
+    const existingIdx = this.schedule.findIndex(i => String(i.id) === String(id));
+    if (existingIdx >= 0) {
+      // Editing existing item: update template properties without duplicating
+      this.schedule[existingIdx] = {
+        ...this.schedule[existingIdx],
+        day, category, title, subject, startTime, endTime, location, notes, isFlexible
+      };
     } else {
-      const existingIdx = this.schedule.findIndex(i => i.id === id);
-      if (existingIdx >= 0) {
-        this.schedule[existingIdx] = { ...this.schedule[existingIdx], ...newItem };
+      // Adding new item
+      if (repeatOption === 'school_days') {
+        (this.settings.schoolDays || [0,1,2,3,4]).forEach((schoolDay, sIdx) => {
+          this.schedule.push({
+            ...newItem,
+            id: `item-${Date.now()}-${sIdx}`,
+            day: schoolDay
+          });
+        });
       } else {
         this.schedule.push(newItem);
       }
@@ -2836,35 +2951,45 @@ class StudyPlannerApp {
     this.showToast('تم حذف النشاط من الجدول', 'info');
   }
 
-  toggleItemCompleted(itemId) {
-    const item = this.schedule.find(i => i.id === itemId);
+  toggleItemCompleted(itemId, dateStr = null) {
+    const item = this.schedule.find(i => String(i.id) === String(itemId));
     if (!item) return;
 
-    item.completed = !item.completed;
-    if (item.completed) {
-      // Award 1 star
+    const targetDate = dateStr || this.getTodayDateString();
+    this.settings.completions = this.settings.completions || {};
+    let list = this.settings.completions[targetDate] || [];
+    const isCurrentlyDone = list.includes(String(item.id));
+
+    if (isCurrentlyDone) {
+      // Uncheck: remove from date completions and deduct 1 star safely
+      this.settings.completions[targetDate] = list.filter(id => id !== String(item.id));
+      this.settings.starsEarned = Math.max(0, (this.settings.starsEarned || 0) - 1);
+      this.playClickSound();
+    } else {
+      // Check: add to date completions and award 1 star
+      if (!this.settings.completions[targetDate]) {
+        this.settings.completions[targetDate] = [];
+      }
+      this.settings.completions[targetDate].push(String(item.id));
       this.settings.starsEarned = (this.settings.starsEarned || 0) + 1;
-      this.saveSettings();
-      this.renderHeaderAndBrand();
-      this.renderRewardsView();
 
       this.playCelebrationSound();
       this.triggerCelebrationConfetti();
       let title = 'أحسنت يا بطل! 🌟';
-      let msg = `لقد أنجزت: «${item.title}» وكسبت نجمة ذكية جديدة!`;
+      let msg = `لقد أنجزت: «${this.escapeHtml(item.title)}» وكسبت نجمة ذكية جديدة!`;
       if (item.category === 'prayer') {
         title = 'تقبل الله طاعتك وصلاتك! 🕌✨';
-        msg = `بارك الله فيك يا ${this.settings.childName}! صلاة في وقتها نور وبركة ونجمة مضيئة في برطمانك ⭐`;
+        msg = `بارك الله فيك يا ${this.escapeHtml(this.settings.childName)}! صلاة في وقتها نور وبركة ونجمة مضيئة في برطمانك ⭐`;
       } else if (item.category === 'quran') {
         title = 'هنيئاً لك حفظ وتلاوة كتاب الله! 📖🌸';
         msg = `ما شاء الله تبارك الله! قراءة وترتيل القرآن الكريم رفعة وأجر عظيم ونور في القلب، أحسنت يا بطل 🌟`;
       }
       this.openCelebrationModal(title, msg);
-    } else {
-      this.playClickSound();
     }
 
-    this.saveSchedule();
+    this.saveSettings();
+    this.renderHeaderAndBrand();
+    this.renderRewardsView();
     this.renderTodayView();
     this.renderWeeklyView();
   }
@@ -2889,18 +3014,26 @@ class StudyPlannerApp {
 
     if (action === 'next_day') {
       item.day = (item.day + 1) % 7;
-      this.showToast(`تم نقل النشاط إلى يوم ${ARABIC_DAYS[item.day].name} ⏩`, 'info');
-    } else if (action === 'delay_30') {
-      item.startTime = this.addMinutesToTime(item.startTime, 30);
-      item.endTime = this.addMinutesToTime(item.endTime, 30);
-      this.showToast(`تم تأخير الموعد 30 دقيقة (${item.startTime}) ⏱️`, 'info');
-    } else if (action === 'delay_60') {
-      item.startTime = this.addMinutesToTime(item.startTime, 60);
-      item.endTime = this.addMinutesToTime(item.endTime, 60);
-      this.showToast(`تم تأخير الموعد ساعة واحدة (${item.startTime}) ⏰`, 'info');
+      const targetDayObj = ARABIC_DAYS.find(d => d.index === item.day) || ARABIC_DAYS[0];
+      this.showToast(`تم نقل النشاط إلى يوم ${targetDayObj.name} ⏩`, 'info');
+    } else if (action === 'delay_30' || action === 'delay_60') {
+      const mins = action === 'delay_30' ? 30 : 60;
+      const dur = Math.max(15, this.timeToMinutes(item.endTime) - this.timeToMinutes(item.startTime));
+      let newStart = this.timeToMinutes(item.startTime) + mins;
+      if (newStart + dur >= 24 * 60) {
+        newStart = Math.max(0, 24 * 60 - dur - 1);
+      }
+      item.startTime = this.minutesToTime(newStart);
+      item.endTime = this.minutesToTime(newStart + dur);
+      this.showToast(`تم تأخير الموعد ${mins} دقيقة (${item.startTime}) ⏱️`, 'info');
     } else if (action === 'weekend') {
       item.day = 6; // Saturday
       this.showToast('تم نقل النشاط إلى عطلة السبت 🎈', 'info');
+    }
+
+    const conflicts = this.findConflicts(item);
+    if (conflicts.length > 0) {
+      this.showToast(`تنبيه: بعد النقل يوجد تداخل في الوقت مع: «${this.escapeHtml(conflicts[0].withItem.title)}» ⚠️`, 'info');
     }
 
     this.saveSchedule();
@@ -2909,6 +3042,12 @@ class StudyPlannerApp {
     this.reschedulingItem = null;
     this.renderTodayView();
     this.renderWeeklyView();
+  }
+
+  minutesToTime(mins) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
   // ==========================================================================
@@ -2948,14 +3087,28 @@ class StudyPlannerApp {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      this.settings.avatarType = 'uploaded';
-      this.settings.avatarDataUrl = dataUrl;
-      this.saveSettings();
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 200;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
 
-      this.renderHeaderAndBrand();
-      this.renderParentView();
-      this.showToast('تم تعيين صورة طفلك اللطيفة محلياً بأمان تام! 📸✨', 'success');
+        const compressed = canvas.toDataURL('image/jpeg', 0.85);
+        this.settings.avatarType = 'uploaded';
+        this.settings.avatarDataUrl = compressed;
+        this.saveSettings();
+
+        this.renderHeaderAndBrand();
+        this.renderParentView();
+        this.showToast('تم تعيين صورة طفلك اللطيفة محلياً بأمان تام! 📸✨', 'success');
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
@@ -2990,19 +3143,26 @@ class StudyPlannerApp {
     reader.onload = (e) => {
       try {
         const imported = JSON.parse(e.target.result);
-        if (imported.settings && imported.schedule) {
-          this.settings = imported.settings;
-          this.schedule = imported.schedule;
+        if (imported && typeof imported === 'object' && Array.isArray(imported.schedule)) {
+          const cloneDefaults = () => (typeof structuredClone === 'function' ? structuredClone(defaultSettings) : JSON.parse(JSON.stringify(defaultSettings)));
+          const base = cloneDefaults();
+          this.settings = { ...base, ...(imported.settings || {}) };
+          this.settings.gameConfig = { ...base.gameConfig, ...(imported.settings?.gameConfig || {}) };
+          this.settings.reminders = { ...base.reminders, ...(imported.settings?.reminders || {}) };
+          this.settings.completions = imported.settings?.completions || {};
+          this.schedule = imported.schedule.filter(item => item && typeof item === 'object' && item.title);
+
           this.saveSettings();
           this.saveSchedule();
-
-          this.init();
+          this.renderAllViews();
           this.showToast('تمت استعادة الجدول بنجاح تام! 📤🌟', 'success');
         } else {
-          this.showToast('صيغة الملف غير متوافقة', 'error');
+          this.showToast('صيغة الملف غير متوافقة أو الجدول غير صالح', 'error');
         }
       } catch (err) {
         this.showToast('تعذر قراءة ملف النسخة الاحتياطية', 'error');
+      } finally {
+        if (event.target) event.target.value = '';
       }
     };
     reader.readAsText(file);
@@ -3012,12 +3172,15 @@ class StudyPlannerApp {
     const confirmReset = confirm('هل أنت متأكد من رغبتك في استعادة الجدول الافتراضي اللطيف؟ سيتم استبدال التغييرات الحالية.');
     if (!confirmReset) return;
 
-    this.settings = { ...defaultSettings };
-    this.schedule = [...defaultSchedule];
+    const cloneDefaults = () => (typeof structuredClone === 'function' ? structuredClone(defaultSettings) : JSON.parse(JSON.stringify(defaultSettings)));
+    const cloneSchedule = () => (typeof structuredClone === 'function' ? structuredClone(defaultSchedule) : JSON.parse(JSON.stringify(defaultSchedule)));
+
+    this.settings = cloneDefaults();
+    this.schedule = cloneSchedule();
     this.saveSettings();
     this.saveSchedule();
 
-    this.init();
+    this.renderAllViews();
     this.showToast('تمت استعادة الجدول الافتراضي بنجاح! 🔄🌸', 'success');
   }
 
@@ -3050,7 +3213,8 @@ class StudyPlannerApp {
   // DUAL ACCOUNT SYSTEM (حساب الطفل وحساب وليّ الأمر)
   // ==========================================================================
   initAccountSystem() {
-    this.currentAccount = this.settings.activeAccount || this.settings.defaultAccount || 'child';
+    // Default to 'child' on fresh load to prevent persistent unlocked parent access without PIN
+    this.currentAccount = this.settings.defaultAccount || 'child';
     this.setAccount(this.currentAccount, true);
   }
 
@@ -3110,16 +3274,7 @@ class StudyPlannerApp {
     }
   }
 
-  generateParentLoginMath() {
-    const a = Math.floor(Math.random() * 5) + 5; // 5 to 9
-    const b = Math.floor(Math.random() * 6) + 4; // 4 to 9
-    this.parentLoginMath = {
-      q: `${a} × ${b} = ؟`,
-      answer: a * b
-    };
-    const qEl = document.getElementById('parent-login-math-question');
-    if (qEl) qEl.textContent = this.parentLoginMath.q;
-  }
+  // generateParentLoginMath removed as PIN 1606 is used directly for clean parent access
 
   openParentLoginModal() {
     this.playClickSound();
@@ -3177,11 +3332,16 @@ class StudyPlannerApp {
     }
   }
 
-  handleParentModeClick() {
-    this.handleAccountSwitchClick();
-  }
+
 
   switchTab(tabId) {
+    // If leaving game tab while game is active, auto-pause to avoid dying while away
+    if (this.activeTab === 'game' && tabId !== 'game') {
+      if (this.gameSession && this.gameSession.running && !this.gameSession.paused) {
+        this.toggleGamePause();
+      }
+    }
+
     // Intercept: if in child account and trying to open parent tab, require login!
     if (tabId === 'parent' && this.currentAccount === 'child') {
       this.openParentLoginModal();
@@ -3214,22 +3374,28 @@ class StudyPlannerApp {
   // Live Clock Check for Reminders
   // ==========================================================================
   startLiveClockCheck() {
+    if (this._clockIntervalStarted) return;
+    this._clockIntervalStarted = true;
     setInterval(() => {
-      if (!this.settings.reminders?.enabled) return;
+      if (!this.settings?.reminders?.enabled) return;
 
       const now = new Date();
       const currentDay = now.getDay();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
       const lead = this.settings.reminders.leadMinutes || 15;
+      const todayStr = this.getTodayDateString();
 
       this.schedule.forEach(item => {
-        if (item.day !== currentDay || item.completed) return;
+        if (item.day !== currentDay || this.isItemCompleted(item, todayStr)) return;
         const itemStart = this.timeToMinutes(item.startTime);
-        if (itemStart - currentMinutes === lead) {
+        const diff = itemStart - currentMinutes;
+        const notifKey = `${item.id}_${todayStr}`;
+        if (diff <= lead && diff >= 0 && !this.notifiedReminders.has(notifKey)) {
+          this.notifiedReminders.add(notifKey);
           this.triggerReminderNotification(item);
         }
       });
-    }, 60000);
+    }, 20000);
   }
 
   triggerReminderNotification(item) {
@@ -3419,7 +3585,7 @@ class StudyPlannerApp {
       // Toggle Done
       const doneBtn = e.target.closest('.btn-done-check');
       if (doneBtn && doneBtn.dataset.id) {
-        this.toggleItemCompleted(doneBtn.dataset.id);
+        this.toggleItemCompleted(doneBtn.dataset.id, doneBtn.dataset.date || null);
         return;
       }
 
@@ -3455,14 +3621,14 @@ class StudyPlannerApp {
       // Claim reward button
       const claimBtn = e.target.closest('[data-claim-id]');
       if (claimBtn) {
-        const rewardId = parseInt(claimBtn.dataset.claimId, 10);
-        const reward = (this.settings.rewards || []).find(r => r.id === rewardId);
+        const claimId = claimBtn.dataset.claimId;
+        const reward = (this.settings.rewards || []).find(r => String(r.id) === String(claimId));
         if (reward) {
           reward.claimed = true;
           this.saveSettings();
           this.playCelebrationSound();
           this.triggerCelebrationConfetti();
-          this.openCelebrationModal('مبارك يا بطل! 🎁', `لقد استلمت مكافأة: «${reward.title}»! استمتع بوقتك مع الأسرة!`);
+          this.openCelebrationModal('مبارك يا بطل! 🎁', `لقد استلمت مكافأة: «${this.escapeHtml(reward.title)}»! استمتع بوقتك مع الأسرة!`);
           this.renderRewardsView();
         }
         return;
@@ -3677,8 +3843,28 @@ class StudyPlannerApp {
         this.settings.clubs = this.settings.clubs || [];
         this.settings.clubs.push(newClub);
         this.saveSettings();
+
+        // Also add scheduled activity for each club day
+        (newClub.days || []).forEach(day => {
+          this.schedule.push({
+            id: `item-${Date.now()}-${day}`,
+            day,
+            title: newClub.name,
+            category: 'club',
+            subject: null,
+            startTime: newClub.start,
+            endTime: newClub.end,
+            location: newClub.location,
+            notes: `نشاط رياضي/ترفيهي (${newClub.prepMinutes} دقيقة وقت استعداد)`,
+            isFlexible: false
+          });
+        });
+        this.saveSchedule();
+
         this.renderParentView();
-        this.showToast(`تمت إضافة نشاط «${clubName}» بنجاح! ⚽`, 'success');
+        this.renderWeeklyView();
+        this.renderTodayView();
+        this.showToast(`تمت إضافة نشاط «${this.escapeHtml(clubName)}» بنجاح في الجدول والإعدادات! ⚽`, 'success');
       });
     }
 

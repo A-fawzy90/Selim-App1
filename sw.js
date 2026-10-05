@@ -3,7 +3,7 @@
 // Enables 100% offline access without server or internet connection
 // ==========================================================================
 
-const CACHE_NAME = 'my-week-v2.5';
+const CACHE_NAME = 'my-week-v2.6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
