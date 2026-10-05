@@ -178,7 +178,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   -webkit-backdrop-filter: blur(16px);
   box-shadow: var(--shadow-sm);
   transition: background-color var(--transition-normal);
-  padding-top: var(--safe-top);
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+  width: 100%;
 }
 
 .header-container {
@@ -2341,8 +2342,184 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
     display: flex;
   }
 
-  .header-center-pill {
+  /* Mobile Header Bar (iPhone & Android) */
+  .app-header {
+    padding-top: max(env(safe-area-inset-top, 0px), 6px);
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .header-container {
+    padding: 6px 12px;
+    gap: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    flex-wrap: nowrap;
+  }
+
+  .brand-section {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+  }
+
+  .app-logo-wrapper {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    flex-shrink: 0;
+  }
+
+  .logo-sparkle {
     display: none;
+  }
+
+  .app-title {
+    font-size: 1.15rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .app-subtitle {
+    display: none;
+  }
+
+  /* Compact Stars Badge in Mobile Header */
+  .header-center-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    box-shadow: none;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+    color: #92400E;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  body.theme-dark .header-center-pill {
+    background: linear-gradient(135deg, #451A03, #78350F);
+    color: #FDE68A;
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+
+  .header-center-pill .star-icon {
+    font-size: 0.95rem;
+  }
+
+  .header-center-pill .stars-count {
+    font-size: 0.95rem;
+    font-weight: 800;
+  }
+
+  .header-center-pill .stars-label {
+    display: none !important;
+  }
+
+  /* Header Controls Group */
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* Unified Compact Account Pill for Mobile */
+  .account-pill-btn {
+    padding: 5px 11px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    border-radius: 9999px;
+    white-space: nowrap;
+    gap: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .account-pill-btn .acc-pill-icon,
+  .account-pill-btn .acc-pill-role {
+    display: none !important;
+  }
+
+  .account-pill-btn .acc-pill-action {
+    padding: 0;
+    background: transparent !important;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: inherit;
+    box-shadow: none;
+  }
+
+  body.account-child .account-pill-btn {
+    background: #2563EB !important;
+    color: #FFFFFF !important;
+    border-color: transparent !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+  }
+
+  body.account-child .account-pill-btn:active {
+    background: #1D4ED8 !important;
+  }
+
+  body.account-parent .account-pill-btn {
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A) !important;
+    color: #92400E !important;
+    border-color: #FCD34D !important;
+  }
+
+  body.theme-dark.account-child .account-pill-btn {
+    background: #2563EB !important;
+    color: #FFFFFF !important;
+    border-color: #3B82F6 !important;
+  }
+
+  body.theme-dark.account-parent .account-pill-btn {
+    background: linear-gradient(135deg, #451A03, #78350F) !important;
+    color: #FDE68A !important;
+    border-color: #D97706 !important;
+  }
+
+  /* Compact Theme Toggle */
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+    border-radius: 9px;
+    flex-shrink: 0;
+  }
+
+  /* Compact Round Child Avatar Button */
+  .child-avatar-chip {
+    padding: 0;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    background: transparent;
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(99, 102, 241, 0.25);
+    overflow: hidden;
+  }
+
+  .child-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    display: block;
+    object-fit: cover;
+  }
+
+  .child-meta {
+    display: none !important;
   }
 
   /* Prevent auto zoom on iOS Safari */
@@ -2465,55 +2642,17 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
 /* Specific compact tuning for iPhone 11 mini / 12 mini / iPhone 11-18 Standard (375px - 430px) */
 @media (max-width: 480px) {
   .header-container {
-    padding: 8px 12px;
-    gap: 6px;
+    padding: 6px 10px;
+    gap: 5px;
   }
 
   .app-logo-wrapper {
-    width: 38px;
-    height: 38px;
-  }
-
-  .app-title {
-    font-size: 1.25rem;
-  }
-
-  .app-subtitle {
-    display: none;
-  }
-
-  .header-controls {
-    gap: 6px;
-  }
-
-  .icon-btn {
-    width: 38px;
-    height: 38px;
-    font-size: 1.1rem;
-  }
-
-  .parent-gate-btn {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    gap: 4px;
-  }
-
-  .child-avatar-chip {
-    padding: 3px 8px 3px 4px;
-    gap: 6px;
-  }
-
-  .child-avatar-img {
     width: 32px;
     height: 32px;
   }
 
-  .child-badge {
-    display: none;
-  }
-
-  .child-name {
-    font-size: 0.82rem;
+  .app-title {
+    font-size: 1.1rem;
   }
 
   .rewards-hero-card {

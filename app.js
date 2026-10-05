@@ -1210,6 +1210,16 @@ class StudyPlannerApp {
       localStorage.setItem('my_week_points_reset_zero_v3', 'true');
     }
 
+    // Force-sync child name to 'سليم' if still 'ريان' or not set in existing stored settings
+    if (!this.settings.childName || this.settings.childName === 'ريان') {
+      this.settings.childName = 'سليم';
+      this.settings.childAge = 9;
+    }
+    if (!this.settings.parentPin || this.settings.parentPin === '1234') {
+      this.settings.parentPin = '1606';
+    }
+    this.saveSettings();
+
     this.init();
   }
 
@@ -3071,12 +3081,12 @@ class StudyPlannerApp {
 
     if (role === 'child') {
       if (accIcon) accIcon.textContent = '👦';
-      if (accRole) accRole.textContent = `حساب ${this.settings.childName || 'الطفل'}`;
-      if (accAction) accAction.textContent = '🔒 دخول وليّ الأمر';
+      if (accRole) accRole.textContent = `حساب ${this.settings.childName || 'سليم'}`;
+      if (accAction) accAction.textContent = '🔒 وليّ الأمر';
     } else {
       if (accIcon) accIcon.textContent = '👑';
       if (accRole) accRole.textContent = 'حساب وليّ الأمر';
-      if (accAction) accAction.textContent = '🔄 تبديل لحساب الطفل';
+      if (accAction) accAction.textContent = `👦 حساب ${this.settings.childName || 'سليم'}`;
     }
 
     if (!skipNotification) {
