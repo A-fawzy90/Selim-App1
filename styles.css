@@ -2350,8 +2350,8 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
   }
 
   .header-container {
-    padding: 6px 12px;
-    gap: 6px;
+    padding: 6px 8px;
+    gap: 5px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2359,20 +2359,35 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
     max-width: 100%;
     overflow: hidden;
     flex-wrap: nowrap;
+    box-sizing: border-box;
   }
 
   .brand-section {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     flex-shrink: 0;
   }
 
   .app-logo-wrapper {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     border-radius: 9px;
     flex-shrink: 0;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(99, 102, 241, 0.25);
+  }
+
+  .app-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .logo-sparkle {
@@ -2380,9 +2395,11 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
   }
 
   .app-title {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
+    font-weight: 800;
     line-height: 1.1;
     white-space: nowrap;
+    color: var(--primary-color);
   }
 
   .app-subtitle {
@@ -2393,30 +2410,38 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
   .header-center-pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 8px;
+    height: 32px;
+    min-height: 32px;
     border-radius: 9999px;
     box-shadow: none;
-    border: 1px solid rgba(245, 158, 11, 0.35);
+    border: 1px solid rgba(245, 158, 11, 0.4);
     background: linear-gradient(135deg, #FEF3C7, #FDE68A);
     color: #92400E;
     flex-shrink: 0;
     cursor: pointer;
+    box-sizing: border-box;
   }
 
   body.theme-dark .header-center-pill {
     background: linear-gradient(135deg, #451A03, #78350F);
     color: #FDE68A;
-    border-color: rgba(245, 158, 11, 0.4);
+    border-color: rgba(245, 158, 11, 0.45);
   }
 
   .header-center-pill .star-icon {
     font-size: 0.95rem;
+    line-height: 1;
+    display: inline-block;
   }
 
   .header-center-pill .stars-count {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 800;
+    font-family: var(--font-accent);
+    line-height: 1;
   }
 
   .header-center-pill .stars-label {
@@ -2425,16 +2450,18 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
 
   /* Header Controls Group */
   .header-controls {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
   }
 
   /* Unified Compact Account Pill for Mobile */
   .account-pill-btn {
-    padding: 5px 11px;
-    font-size: 0.78rem;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 9px;
+    font-size: 0.76rem;
     font-weight: 800;
     border-radius: 9999px;
     white-space: nowrap;
@@ -2442,8 +2469,10 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    line-height: 1.2;
+    line-height: 1;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+    box-sizing: border-box;
   }
 
   .account-pill-btn .acc-pill-icon,
@@ -2454,10 +2483,11 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
   .account-pill-btn .acc-pill-action {
     padding: 0;
     background: transparent !important;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 800;
     color: inherit;
     box-shadow: none;
+    line-height: 1;
   }
 
   body.account-child .account-pill-btn {
@@ -2474,7 +2504,7 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
   body.account-parent .account-pill-btn {
     background: linear-gradient(135deg, #FEF3C7, #FDE68A) !important;
     color: #92400E !important;
-    border-color: #FCD34D !important;
+    border: 1px solid #FCD34D !important;
   }
 
   body.theme-dark.account-child .account-pill-btn {
@@ -2493,25 +2523,40 @@ body.theme-dark .mobile-nav-btn.highlight-btn {
   .icon-btn {
     width: 32px;
     height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     font-size: 0.95rem;
+    line-height: 1;
     border-radius: 9px;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
   }
 
   /* Compact Round Child Avatar Button */
   .child-avatar-chip {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     padding: 0;
     border: 2px solid var(--primary-color);
     border-radius: 50%;
-    background: transparent;
+    background: var(--bg-card);
     flex-shrink: 0;
-    box-shadow: 0 1px 4px rgba(99, 102, 241, 0.25);
+    box-shadow: 0 1px 5px rgba(99, 102, 241, 0.25);
     overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
   }
 
   .child-avatar-img {
-    width: 32px;
-    height: 32px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     border: none;
     display: block;
@@ -3499,10 +3544,6 @@ body.theme-dark.account-parent .account-pill-btn {
   }
   body.account-parent .mobile-bottom-bar {
     grid-template-columns: repeat(6, 1fr);
-  }
-  .account-pill-btn {
-    padding: 5px 10px;
-    font-size: 0.78rem;
   }
 }
 
